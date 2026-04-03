@@ -1,0 +1,27 @@
+﻿Payment Method,Payment Method ID,Fiat Currencies Supported (1),Order Directions,Transak Fee,Minimum Amount,Fiat Processing Time
+https://www.notion.so/31942dddb4f1806cad62ed00eb0a9758?pvs=21,ALFA,BYN EUR RUB USD,BUY / SELL,"ALFA Buy: 2.5% / Sell: 1.5%; 
+OTHER Buy: 3.0% / Sell: 2.5%;
+CRYPTO_CARD Buy: 2.5% / Sell: 1.5%;
+ACCOUNTING ALFA Buy: 0% / Sell: 0.6%;
+ACCOUNTING CRYPTO_CARD Buy: 0% / Sell: 0.6%",,INSTANT
+https://www.notion.so/333ae334ccd980ff9560f98e8d092787?pvs=21,MTS,RUB,SELL,"Buy: 2.5% / Sell: 2.0%;
+EXCHANGE Buy: 2.5%;
+SDK_EXCHANGE Buy: 2.5% / Sell: 2.0%;
+ACCOUNTING Buy: 0%;
+RF_CARDS EXCHANGE Sell: 2.0%;
+RF_CARDS ACCOUNTING Sell: 1.5%",,INSTANT
+https://www.notion.so/334ae334ccd980f5bd9eda8441f43c95?pvs=21,VTB,RUB,SELL,"Sell: 2.0%;
+ACCOUNTING Sell: 1.5%",,INSTANT
+https://www.notion.so/334ae334ccd980a9acd8ff9cea3f2789?pvs=21,CORTI_MILLI,RUB,SELL,"Sell: 2.0%;
+ACCOUNTING Sell: 1.5%",,INSTANT
+https://www.notion.so/336ae334ccd980e1beaae4b1cdd875be?pvs=21,SBER,RUB,BUY,ACCOUNTING Buy: 1.5%,,
+https://www.notion.so/31942dddb4f1803f949ac6a3b9590a28?pvs=21,ASSIST,BYN EUR RUB USD,BUY / SELL,"BELARUSBANK Buy: 3.0% / Sell: 2.5%;
+OTHER Buy: 3.5–4.9% / Sell: 3.0–4.9%;
+ACCOUNTING BELARUSBANK Buy: 0% / Sell: 0.8%;
+ACCOUNTING OTHER Buy: 0% / Sell: 3%",,INSTANT
+https://www.notion.so/31942dddb4f180fca2b2ef7a50dacbd9?pvs=21,CARUSELL,RUB,BUY / SELL,"ACCOUNTING Buy: 1.5% / Sell: 1.5%;
+EXCHANGE Sell: 2.0%;
+SDK_EXCHANGE Sell: 2.0%;
+Sell: 2.0%",,INSTANT
+CA,CA,AED BYN EUR RUB USD,BUY / SELL,"Buy: 2.5% / Sell: 1.5%;
+ACCOUNTING Buy: 0% / Sell: 0%",,
