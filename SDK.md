@@ -174,29 +174,55 @@ enum Currency {
     WBP, // TRC-20
 }
 ```
-## General SDK flow
+## General WhiteBird SDK flow
 
 ```mermaid
 flowchart TD
-    A[Open SDK] --> B{SDK mode}
-    B -->|LoginMode| C[Sign in / Sign up in SDK]
-    B -->|AuthMode| D[Sign in in SDK]
-    B -->|TokensMode| E[Use provided accessToken/refreshToken]
+    A[Merchant calls wbExchangeSdk.setup] --> B{Required params valid?}
+    B -->|No| B1[SDK is not mounted]
+    B -->|Yes| C{Mode}
 
-    C --> F[Resolve user status]
-    D --> F
-    E --> F
+    C -->|LoginMode| D[SDK auth flow inside WhiteBird UI]
+    C -->|AuthMode| E[SDK auth flow + onLogin callback]
+    C -->|TokensMode| F[Use provided accessToken + refreshToken]
 
-    F -->|NOT_VERIFIED| G[Verification agreements]
-    G --> H[SumSub verification]
-    H --> I[Pending AML review]
-    I --> J{Approved?}
-    J -->|Yes| K[VERIFIED]
-    J -->|No| X[Restricted / rejected flow]
+    D --> G[Resolve user/profile status]
+    E --> G
+    F --> G
 
-    F -->|VERIFIED + testingNeeded| L[Crypto test]
-    L --> K
+    G -->|NOT_VERIFIED| H[Verification agreements]
+    H --> I[SumSub verification]
+    I --> J[ON_VERIFICATION: waiting AML decision]
+    J --> K{AML approved?}
+    K -->|No| X[Restricted / blocked flow]
+    K -->|Yes| L[VERIFIED]
 
-    F -->|VERIFIED| K
-    K --> M[Exchange / Wallet operations]
+    G -->|VERIFIED + testingNeeded + !testingCompleted| M[Crypto test]
+    M --> L
+
+    G -->|VERIFIED| L
+    L --> N[Exchange / Wallet operations]
+```
+## Scenarios (steps)
+
+### Scenario A — LoginMode (full SDK auth UI)
+1. Merchant initializes SDK with `mode=LoginMode`, `merchantId`, `el`.
+2. User authenticates in SDK UI.
+3. SDK resolves user/profile status.
+4. If user is not verified, SDK routes to verification flow.
+5. If user is verified (and crypto test is not required), user gets access to exchange/wallet operations.
+
+### Scenario B — AuthMode (auth + token callback)
+1. Merchant initializes SDK with `mode=AuthMode`.
+2. User authenticates in SDK UI.
+3. SDK returns auth payload via `onLogin({ email, accessToken, refreshToken, isUserVerified })`.
+4. Merchant uses returned tokens for custom integration (own UI / API calls).
+5. Access to operations still depends on verification/test statuses.
+
+### Scenario C — TokensMode (seamless start)
+1. Merchant backend registers/fetches user and generates tokens.
+2. Merchant initializes SDK with `mode=TokensMode`, `accessToken`, `refreshToken`.
+3. SDK starts without login screen (tokens are already provided).
+4. SDK applies status-based routing: verification / pending AML / crypto test if required.
+5. Verified users proceed to exchange/wallet operations.
 
