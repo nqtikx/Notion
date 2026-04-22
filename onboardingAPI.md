@@ -26,46 +26,47 @@ If the identity document does not contain registration address information, this
 #### POST /api/v2/kyc/merchant/client/register
 
 #### Params:
-- **email** - string(255)
-- **phone** - string(100), optional
-- **gender** - Gender
+- **email** - string(255), required
+- **phone** - string(100/255), required
+- **gender** - Gender, required
 - **firstNameRu** - string(255), First name in Russian (if present in PID)
 - **lastNameRu** - string(255), Last name in Russian (if present in PID)
 - **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID)
 - **firstName** - string(255), First name in Latin characters (if present in PID)
 - **lastName** - string(255), Last name in Latin characters (if present in PID)
 
-- **placeOfBirth** - string(unlimited), Place of birth
+- **placeOfBirth** - string(unlimited), Place of birth, required
 - **birthDate** - "YYYY-MM-DD", Date of birth
-- **nationality** - CountryCode, Nationality by birth
+- **nationality** - CountryCode, Nationality by birth, required
 
-- **residence** - CountryCode, Country of issued PID
-- **identityDocType** - DocType, Type of PID from the list
+- **residence** - CountryCode, Country of issued PID, required
+- **identityDocType** - DocType, Type of PID from the list, required
 - **identityDocIssueDate** - "YYYY-MM-DD", Issue date of PID
 - **identityDocExpireDate** - "YYYY-MM-DD", Expiry date of PID
-- **identityDocNumber** - string(50), Series and number of PID
-- **identityDocIssuer** - string(unlimited), Authority that issued the PID
+- **identityDocNumber** - string(50), Series and number of PID, required
+- **identityDocIssuer** - string(unlimited), Authority that issued the PID, required
 - **personalNumber** - string(50), Identification number from PID
 
 > Registration address data may differ depending on the country. Fill in the fields that correspond to the address format in the user’s registration country.
 
-- **registrationCountry** - CountryCode, Registration country
-- **registrationRegion** - string(unlimited), Registration region
-- **residenceDistrict** - string(unlimited), Registration district
-- **registrationCity** - string(unlimited), Registration city (must include settlement name)
-- **registrationStreet** - string(unlimited), Registration street
-- **registrationHouseAndFlat** - string(100), House, building, and apartment number
-- **postCode** - string(20), Postal code
+- **registrationCountry** - CountryCode, Registration country, required
+- **registrationRegion** - string(unlimited), Registration region, required
+- **residenceDistrict** - string(unlimited), Registration district, required
+- **registrationCity** - string(unlimited), Registration city (must include settlement name), required
+- **registrationStreet** - string(unlimited), Registration street, required
+- **registrationHouseAndFlat** - string(100), House, building, and apartment number, required
+- **postCode** - string(20), Postal code, required
 
 - **notUSTaxPayer** - bool, Not a U.S. taxpayer
 - **agreedWithOffer** - bool, User’s consent to WhiteBird offer
 - **exchangeInPersonalInterests** - bool, Confirmation that exchange is for personal interests
 - **externalClientId** - string, Optional - client identification number of the user in partner's system
 
-### !! All fields are required !!
+> Core KYC fields are required. Some fields are country-specific and validated according to backend rules.
 
 #### Response:
-- **clientId** - string(255)
+- **id** - string(255), registered clientId
+- **status** - string, current client status
 
 Request examples:
 
@@ -161,7 +162,10 @@ The test consists of 5 simple questions. Use GET crypto-test to retrieve them, t
 
 #### Request:
 - **clientId** - string(255)
-- **answers** - object, “questionId”(string): answerId(int).
+- **exchangeInPersonalInterests** - bool
+- **agreedWithOffer** - bool
+- **notUSTaxPayer** - bool
+- **answers** - object, “questionId”(long): answerId(long)
 
 ### Generate tokens request
 
@@ -178,6 +182,8 @@ Not used in On/Off ramp API.
 - **token** - string(unlimited)
 - **refreshToken** - string(unlimited)
 
+> For SDK initialization, map `token` from this response to `accessToken` in `wbExchangeSdk.setup(...)`.
+
 ### Simple register request
 
 Request to obtain clientId for token/generate use but without KYC data.
@@ -185,13 +191,15 @@ Request to obtain clientId for token/generate use but without KYC data.
 #### POST /api/v2/auth/merchant/client/register
 
 #### Params:
-- **email** - string(255)
-- **phone** - string(255), Optional client's phone number
-- **merchantId** - string(255)
+- **email** - string(255), required
+- **phone** - string(100/255), required
+- **merchantId** - string(255), required
 - **externalClientId** - string, Optional - client identification number of the user in partner's system
+- **agreedWithOffer** - bool
 
 #### Response:
 - **id** - string(255), registered clientId
+- **status** - string, current client status
 
 #### Data types
 
