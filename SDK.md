@@ -102,7 +102,7 @@ wbExchangeSdk.setup({
 
   // callback returns user tokens for interaction with WhiteBird API
   // will not return tokens if the user is not yet verified.
-  onLogin: ({accessToken, refreshToken, isUserVerified}) => {},
+  onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {},
 })
 ```
 
