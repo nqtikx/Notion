@@ -101,7 +101,7 @@ wbExchangeSdk.setup({
   mode: wbExchangeSdk.mode.AuthMode,
 
   // callback returns user tokens for interaction with WhiteBird API
-  // will not return tokens if the user is not yet verified.
+  // token payload depends on backend auth/verification state.
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {},
 })
 ```
@@ -173,4 +173,30 @@ enum Currency {
     USDT_TON, // TON
     WBP, // TRC-20
 }
+
+## General SDK flow
+
+```mermaid
+flowchart TD
+    A[Open SDK] --> B{SDK mode}
+    B -->|LoginMode| C[Sign in / Sign up in SDK]
+    B -->|AuthMode| D[Sign in in SDK]
+    B -->|TokensMode| E[Use provided accessToken/refreshToken]
+
+    C --> F[Resolve user status]
+    D --> F
+    E --> F
+
+    F -->|NOT_VERIFIED| G[Verification agreements]
+    G --> H[SumSub verification]
+    H --> I[Pending AML review]
+    I --> J{Approved?}
+    J -->|Yes| K[VERIFIED]
+    J -->|No| X[Restricted / rejected flow]
+
+    F -->|VERIFIED + testingNeeded| L[Crypto test]
+    L --> K
+
+    F -->|VERIFIED| K
+    K --> M[Exchange / Wallet operations]
 ```
