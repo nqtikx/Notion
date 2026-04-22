@@ -173,7 +173,7 @@ enum Currency {
     USDT_TON, // TON
     WBP, // TRC-20
 }
-
+```
 ## General SDK flow
 
 ```mermaid
@@ -199,4 +199,4 @@ flowchart TD
 
     F -->|VERIFIED| K
     K --> M[Exchange / Wallet operations]
-```
+
