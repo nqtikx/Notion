@@ -27,13 +27,13 @@ If the identity document does not contain registration address information, this
 
 #### Params:
 - **email** - string(255), required
-- **phone** - string(100/255), required
+- **phone** - string(255), required
 - **gender** - Gender, required
-- **firstNameRu** - string(255), First name in Russian (if present in PID)
-- **lastNameRu** - string(255), Last name in Russian (if present in PID)
-- **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID)
-- **firstName** - string(255), First name in Latin characters (if present in PID)
-- **lastName** - string(255), Last name in Latin characters (if present in PID)
+- **firstNameRu** - string(255), First name in Russian (if present in PID), required
+- **lastNameRu** - string(255), Last name in Russian (if present in PID), required
+- **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID), required
+- **firstName** - string(255), First name in Latin characters (if present in PID), required
+- **lastName** - string(255), Last name in Latin characters (if present in PID), required
 
 - **placeOfBirth** - string(unlimited), Place of birth, required
 - **birthDate** - "YYYY-MM-DD", Date of birth
