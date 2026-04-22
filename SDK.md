@@ -174,37 +174,93 @@ enum Currency {
     WBP, // TRC-20
 }
 ```
-## One-line flow
-`setup -> mode entry -> status check -> (verification / pending / crypto test) -> operations`
+## General WhiteBird SDK flow
 
-## Scenarios
-- **LoginMode:** SDK auth UI -> status-driven routing -> operations.
-- **AuthMode:** SDK auth UI -> `onLogin(...)` callback -> status-driven routing.
-- **TokensMode:** merchant tokens -> no SDK login screen -> status-driven routing.
-
-## Mode table
-
-| Mode | Entry requirements | Auth source | Callback output | Typical use |
-|---|---|---|---|---|
-| LoginMode | `el`, `mode`, `merchantId` | SDK UI | optional user data events | Full WhiteBird UI flow |
-| AuthMode | `el`, `mode`, `merchantId` | SDK UI | `onLogin({ email, accessToken, refreshToken, isUserVerified })` | Merchant custom UI + WB auth |
-| TokensMode | `el`, `mode`, `merchantId`, `accessToken`, `refreshToken` | Merchant backend | order/back events | Seamless start with pre-issued tokens |
-
-
-## One-line flow
+### One-line flow
 `Initialize SDK -> identify user context -> enforce compliance path -> unlock exchange/wallet actions`
 
-## Scenarios
-- **New user (Login/Auth):** sign up/sign in -> verification agreements -> SumSub -> AML pending -> verified.
-- **Verified user:** direct access to exchange/wallet actions.
-- **Verified user with required crypto test:** crypto test first, then operations.
-- **Token-based user (TokensMode):** immediate session start from merchant-issued tokens.
+### Scenarios
+- **LoginMode:** user authenticates inside SDK, then SDK routes by verification status.
+- **AuthMode:** user authenticates inside SDK, SDK returns auth payload via `onLogin(...)`, then status-based access applies.
+- **TokensMode:** SDK starts with merchant-issued tokens, skips login screen, then applies same status-based routing.
+- **Verified user path:** direct access to exchange/wallet operations.
+- **Restricted user path:** verification/pending/crypto-test gates are applied before operations.
 
-## Status routing table
+### Status routing table
 
 | User status condition | SDK behavior | Next step |
 |---|---|---|
-| `NOT_VERIFIED` | Blocks operations | Verification agreements + SumSub |
-| `ON_VERIFICATION` | Keeps restricted access | Wait AML decision |
-| `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` | Requires crypto test | Complete crypto test |
-| `VERIFIED` and no pending test | Allows operations | Exchange / wallet actions |
+| `NOT_VERIFIED` | Operations are blocked | Verification agreements -> SumSub |
+| `ON_VERIFICATION` | Limited access | Wait AML decision |
+| `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` | Crypto test required | Complete crypto test |
+| `VERIFIED` and no pending test | Full access | Exchange / wallet actions |
+
+---
+
+## Registration process
+
+### One-line flow
+`Sign up input -> agreements -> email confirmation -> phone verification rule -> registration -> auto-login`
+
+### Scenarios
+- **Standard signup:** user enters email/phone/password, accepts agreements, confirms email, then registration is finalized.
+- **BY country flow:** after email confirmation, SMS phone verification is required before registration completion.
+- **Non-BY flow:** registration continues after email confirmation without mandatory SMS confirmation step.
+- **Successful completion:** user is automatically logged in and receives session tokens.
+
+### Registration routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Email code not confirmed | Registration does not continue | Stay in email confirmation step |
+| `countryCode == BY` | Phone verification is required | Proceed after SMS code confirmation |
+| `countryCode != BY` | Phone verification is not mandatory gate | Proceed to registration |
+| Registration + login success | Tokens issued | User enters authorized flow |
+
+---
+
+## Verification process
+
+### One-line flow
+`Legal agreements -> SumSub KYC -> AML review -> verified status -> optional crypto test gate`
+
+### Scenarios
+- **Verification start:** user accepts required legal confirmations (`notUSTaxPayer`, `exchangeInPersonalInterests`, `agreedWithOffer`).
+- **KYC execution:** SDK runs SumSub documents + liveness steps.
+- **AML pending:** user is moved to `ON_VERIFICATION` and waits review outcome.
+- **Approval path:** user becomes `VERIFIED`.
+- **Regulatory add-on:** if crypto test is required, user must pass it before full access.
+
+### Verification routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Agreements not accepted | Verification cannot proceed | Stay on agreements step |
+| SumSub in progress | KYC flow remains active | Continue KYC steps |
+| AML pending | User is gated | `ON_VERIFICATION` waiting state |
+| AML approved | Verification completed | `VERIFIED` |
+| `testingNeeded=true` and not completed | Extra compliance gate | Crypto test required |
+
+---
+
+## Authorization process
+
+### One-line flow
+`Credentials input -> challenge checks (MFA/Captcha) -> token issuance -> status-based access`
+
+### Scenarios
+- **Primary sign-in:** user enters email/password.
+- **MFA path:** if enabled, user confirms login with 2FA code.
+- **Captcha path:** when required, user solves captcha before token issuance.
+- **Auth success:** access/refresh tokens are issued.
+- **Post-auth control:** access to operations still depends on verification and compliance status.
+
+### Authorization routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Invalid credentials | Auth fails | Stay on sign-in |
+| MFA enabled | Request 2FA confirmation | Continue after valid code |
+| Captcha required | Request captcha solve | Continue after valid captcha |
+| Auth successful | Tokens issued | Authorized session |
+| User not compliant yet | Access gated by status | Redirect to verification/pending/crypto-test path |
