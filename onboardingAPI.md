@@ -193,7 +193,7 @@ Request to obtain clientId for token/generate use but without KYC data.
 #### Params:
 - **email** - string(255), required
 - **phone** - string(100/255), required
-- **merchantId** - string(255), required
+- **merchantId** - string(255), Optional - x-api-key
 - **externalClientId** - string, Optional - client identification number of the user in partner's system
 - **agreedWithOffer** - bool
 
