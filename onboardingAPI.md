@@ -182,8 +182,6 @@ Not used in On/Off ramp API.
 - **token** - string(unlimited)
 - **refreshToken** - string(unlimited)
 
-> For SDK initialization, map `token` from this response to `accessToken` in `wbExchangeSdk.setup(...)`.
-
 ### Simple register request
 
 Request to obtain clientId for token/generate use but without KYC data.
