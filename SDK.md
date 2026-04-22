@@ -131,6 +131,59 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 - User registration request: [register](../onboardingAPI/README.md#register-post-request)
 - User token request: [generate](../onboardingAPI/README.md#generate-tokens-request)
 
+### Integration scenarios
+
+Below are the integration scenarios supported by the current backend and SDK contract.
+
+#### 1) Full PID data (Identification Agent flow)
+
+Use this scenario when the partner already has a complete user identity profile and sends full KYC data to WhiteBird via backend-to-backend APIs.
+
+Flow:
+1. Register user with full KYC payload:  
+   `POST /api/v2/kyc/merchant/client/register`
+2. Check current client status (recommended):  
+   `POST /api/v2/kyc/merchant/client/status`
+3. If required for this client, process crypto test:  
+   - `GET /api/v2/kyc/merchant/client/crypto-test?clientId=...`  
+   - `POST /api/v2/kyc/merchant/client/crypto-test`
+4. Generate SDK tokens:  
+   `POST /api/v2/auth/merchant/client/token/generate`
+5. Start SDK in `TokensMode` with generated tokens.
+
+#### 2) Partial data bootstrap (email/phone)
+
+Use this scenario when the partner does not have full KYC data and only needs to bootstrap SDK access with basic user identity.
+
+Flow:
+1. Register merchant client with lightweight payload:  
+   `POST /api/v2/auth/merchant/client/register`
+2. Generate SDK tokens:  
+   `POST /api/v2/auth/merchant/client/token/generate`
+3. Start SDK in `TokensMode`
+4. User completes remaining verification/KYC steps inside SDK if required by status.
+
+#### 3) SDK-driven onboarding (no pre-registration on partner side)
+
+Use this scenario when the partner delegates user auth/registration UX to SDK.
+
+Flow:
+1. Start SDK in `LoginMode` or `AuthMode`
+2. User completes sign-in/sign-up inside SDK
+3. SDK applies status-based routing (verification / pending AML / crypto-test gate if required)
+4. In `AuthMode`, partner receives token payload via `onLogin(...)` for custom integration.
+
+#### KYC path inside SDK (when client wants user to complete KYC in SDK UI)
+
+Status-driven flow:
+- `NOT_VERIFIED` -> verification agreements -> SumSub
+- `ON_VERIFICATION` -> waiting AML decision
+- `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` -> crypto test required
+- `VERIFIED` and compliant -> exchange/wallet operations available
+
+> Note: `POST /api/v2/auth/merchant/client/token/generate` returns `token` and `refreshToken`.  
+> For SDK initialization, pass `token` as `accessToken` in `wbExchangeSdk.setup(...)`.
+
 ## Adding to a website
 
 ### Connection via CDN
