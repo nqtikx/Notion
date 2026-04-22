@@ -20,8 +20,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 
 ## High-level process overview
 
-
-## General WhiteBird SDK flow
+### General WhiteBird SDK flow
 
 ### One-line flow
 `Initialize SDK -> resolve mode -> apply status gates -> allow operations`
@@ -42,7 +41,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 
 ---
 
-## Registration process
+### Registration process
 
 ### One-line flow
 `Sign up -> agreements -> email confirmation -> conditional phone verification -> register -> auto-login`
@@ -65,7 +64,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 
 ---
 
-## Verification process
+### Verification process
 
 ### One-line flow
 `Agreements -> SumSub KYC -> AML review -> verified status -> optional crypto-test gate`
@@ -88,7 +87,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 
 ---
 
-## Authorization process
+### Authorization process
 
 ### One-line flow
 `Credentials -> MFA/Captcha checks -> token issuance -> status-based access`
@@ -108,6 +107,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 | MFA enabled | 2FA required | Continue after valid code |
 | Captcha required | Captcha required | Continue after valid challenge |
 | Auth success | Tokens issued | Authorized session (with status gates) |
+
 ## Brief description of modes
 
 Terminology:
