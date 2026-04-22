@@ -35,7 +35,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 | Condition | SDK behavior | Result |
 |---|---|---|
 | `NOT_VERIFIED` | Verification is required | Agreements -> SumSub |
-| `ON_VERIFICATION` | Access is limited | Wait AML decision |
+| `PENDING` | Access is limited | Wait AML decision |
 | `VERIFIED` + crypto test required | Crypto test gate | Complete crypto test |
 | `VERIFIED` and compliant | Full access | Exchange / wallet operations |
 
