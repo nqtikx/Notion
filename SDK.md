@@ -174,81 +174,37 @@ enum Currency {
     WBP, // TRC-20
 }
 ```
-## General WhiteBird SDK flow
+## One-line flow
+`setup -> mode entry -> status check -> (verification / pending / crypto test) -> operations`
 
-```mermaid
-flowchart TD
-    A[Merchant calls wbExchangeSdk.setup] --> B{Required params valid?}
-    B -->|No| X[SDK is not mounted]
-    B -->|Yes| C{Mode}
+## Scenarios
+- **LoginMode:** SDK auth UI -> status-driven routing -> operations.
+- **AuthMode:** SDK auth UI -> `onLogin(...)` callback -> status-driven routing.
+- **TokensMode:** merchant tokens -> no SDK login screen -> status-driven routing.
 
-    C -->|LoginMode| D[Run SDK auth flow]
-    C -->|AuthMode| E[Run SDK auth flow + onLogin callback]
-    C -->|TokensMode| F[Use provided tokens]
+## Mode table
 
-    D --> G[Resolve user/profile status]
-    E --> G
-    F --> G
-
-    G -->|NOT_VERIFIED| H[Go to verification flow]
-    G -->|ON_VERIFICATION| I[Show pending AML state]
-    G -->|VERIFIED + crypto test required| J[Go to crypto test]
-    G -->|VERIFIED| K[Open exchange/wallet operations]
-
-```
-## Registration process
-
-```mermaid
-flowchart TD
-    A[User opens Sign Up] --> B[Enter email, phone, password]
-    B --> C[Accept agreements]
-    C --> D[Send email confirmation code]
-    D --> E[User confirms email]
-    E --> F[Send phone verification request]
-
-    F --> G{countryCode == BY?}
-    G -->|Yes| H[Require SMS phone verification]
-    H --> I[User confirms phone code]
-    I --> J[Register user]
-    G -->|No| J
-
-    J --> K[Auto login]
-    K --> L[Return access/refresh tokens]
-
-```
-## Verification process
-
-```mermaid
-flowchart TD
-    A[User status requires verification] --> B[Accept verification agreements]
-    B --> C[Start SumSub]
-    C --> D[Upload documents]
-    D --> E[Pass liveness]
-    E --> F[Submit to AML review]
-    F --> G[Status ON_VERIFICATION]
-
-    G --> H{AML decision}
-    H -->|Approved| I[Status VERIFIED]
-    H -->|Rejected| J[Restricted/blocked]
-
-    I --> K{testingNeeded && !testingCompleted?}
-    K -->|Yes| L[Pass crypto test]
-    L --> M[Operations available]
-    K -->|No| M
+| Mode | Entry requirements | Auth source | Callback output | Typical use |
+|---|---|---|---|---|
+| LoginMode | `el`, `mode`, `merchantId` | SDK UI | optional user data events | Full WhiteBird UI flow |
+| AuthMode | `el`, `mode`, `merchantId` | SDK UI | `onLogin({ email, accessToken, refreshToken, isUserVerified })` | Merchant custom UI + WB auth |
+| TokensMode | `el`, `mode`, `merchantId`, `accessToken`, `refreshToken` | Merchant backend | order/back events | Seamless start with pre-issued tokens |
 
 
-```
-## Authorization process
+## One-line flow
+`Initialize SDK -> identify user context -> enforce compliance path -> unlock exchange/wallet actions`
 
-```mermaid
-flowchart TD
-    A[User opens Sign In] --> B[Enter email + password]
-    B --> C{MFA enabled?}
-    C -->|Yes| D[Enter 2FA code]
-    C -->|No| E{Captcha required?}
-    E -->|Yes| F[Pass captcha]
-    E -->|No| G[Issue tokens]
+## Scenarios
+- **New user (Login/Auth):** sign up/sign in -> verification agreements -> SumSub -> AML pending -> verified.
+- **Verified user:** direct access to exchange/wallet actions.
+- **Verified user with required crypto test:** crypto test first, then operations.
+- **Token-based user (TokensMode):** immediate session start from merchant-issued tokens.
 
-    D --> G
-    F --> G
-    G --> H[Authorized session]
+## Status routing table
+
+| User status condition | SDK behavior | Next step |
+|---|---|---|
+| `NOT_VERIFIED` | Blocks operations | Verification agreements + SumSub |
+| `ON_VERIFICATION` | Keeps restricted access | Wait AML decision |
+| `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` | Requires crypto test | Complete crypto test |
+| `VERIFIED` and no pending test | Allows operations | Exchange / wallet actions |
