@@ -182,7 +182,6 @@ Status-driven flow:
 - `VERIFIED` and compliant -> exchange/wallet operations available
 
 > Note: `POST /api/v2/auth/merchant/client/token/generate` returns `token` and `refreshToken`.  
-> For SDK initialization, pass `token` as `accessToken` in `wbExchangeSdk.setup(...)`.
 
 ## Adding to a website
 
