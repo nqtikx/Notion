@@ -3,7 +3,7 @@
 ## Introduction
 Welcome to the WhiteBird SDK documentation!
 
-This SDK provides the ability to integrate **WhiteBird instant crypto exchange** functionality directly into your mobile app (Swift/Kotlin SDK) or website (JS SDK).  
+This SDK provides the ability to integrate **WhiteBird instant crypto exchange** functionality directly into your website (JS SDK).  
 Authorization in the SDK uses a simplified mechanism with OTP login to the platform.
 
 The SDK supports interaction with WhiteBird in three modes:
