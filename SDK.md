@@ -4,7 +4,7 @@
 Welcome to the WhiteBird SDK documentation!
 
 This SDK provides the ability to integrate **WhiteBird instant crypto exchange** functionality directly into your website (JS SDK).  
-Authorization in the SDK uses a simplified mechanism with OTP login to the platform.
+Authorization flow depends on the selected SDK mode.
 
 The SDK supports interaction with WhiteBird in three modes:
 - LoginMode
