@@ -265,6 +265,8 @@ wbExchangeSdk.setup({
 
 **onOrderCreated** - ({orderId, internalCryptoAddress}) -> void, callback for order creation notification for merchant.
 
+**onUserData** - ({ email, accessToken, refreshToken }) => {} -> callback is called in LoginMode when receiving user data from the SDK.
+
 **currencyToAmount** - int, allows pre-filling the target amount for exchange.
 
 **disableAmount** - bool, disables amount input editing in SDK UI.
