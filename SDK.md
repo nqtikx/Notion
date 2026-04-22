@@ -264,3 +264,100 @@ enum Currency {
 | Captcha required | Request captcha solve | Continue after valid captcha |
 | Auth successful | Tokens issued | Authorized session |
 | User not compliant yet | Access gated by status | Redirect to verification/pending/crypto-test path |
+
+
+
+
+
+
+
+
+
+
+## General WhiteBird SDK flow
+
+### One-line flow
+`Initialize SDK -> resolve mode -> apply status gates -> allow operations`
+
+### Scenarios
+- **LoginMode:** SDK handles user auth flow, then routes by status.
+- **AuthMode:** SDK handles auth, returns tokens via `onLogin(...)`, then applies status gates.
+- **TokensMode:** SDK starts with provided tokens, skips login screen, then applies status gates.
+
+### Status routing table
+
+| Condition | SDK behavior | Result |
+|---|---|---|
+| `NOT_VERIFIED` | Verification is required | Agreements -> SumSub |
+| `ON_VERIFICATION` | Access is limited | Wait AML decision |
+| `VERIFIED` + crypto test required | Crypto test gate | Complete crypto test |
+| `VERIFIED` and compliant | Full access | Exchange / wallet operations |
+
+---
+
+## Registration process
+
+### One-line flow
+`Sign up -> agreements -> email confirmation -> conditional phone verification -> register -> auto-login`
+
+### Scenarios
+- User submits sign-up form and accepts agreements.
+- Email confirmation is required.
+- For `countryCode == BY`, SMS phone confirmation is required before completion.
+- For non-BY users, registration proceeds without mandatory SMS step.
+- On success, SDK performs login and continues with authorized session.
+
+### Registration routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Email not confirmed | Registration paused | Stay in confirmation step |
+| `countryCode == BY` | Phone code required | Continue after SMS confirm |
+| `countryCode != BY` | No mandatory SMS gate | Continue to registration |
+| Registration success | Auto-login | Tokens/session created |
+
+---
+
+## Verification process
+
+### One-line flow
+`Agreements -> SumSub KYC -> AML review -> verified status -> optional crypto-test gate`
+
+### Scenarios
+- User confirms legal statements and offer agreement.
+- SDK runs SumSub (documents + liveness).
+- User enters AML pending state (`ON_VERIFICATION`) until decision.
+- If approved, user becomes `VERIFIED`.
+- If crypto test is required, it must be completed before full access.
+
+### Verification routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Agreements not confirmed | Verification blocked | Stay on agreements |
+| SumSub completed, AML pending | Limited access | `ON_VERIFICATION` |
+| AML approved | Verification done | `VERIFIED` |
+| Crypto test required | Additional gate | Complete test to continue |
+
+---
+
+## Authorization process
+
+### One-line flow
+`Credentials -> MFA/Captcha checks -> token issuance -> status-based access`
+
+### Scenarios
+- User signs in with email/password.
+- If MFA is enabled, 2FA code is required.
+- If captcha is required, captcha challenge must pass.
+- On success, tokens are issued.
+- Access to operations still depends on verification/compliance status.
+
+### Authorization routing table
+
+| Condition | Behavior | Result |
+|---|---|---|
+| Invalid credentials | Auth fails | Stay on sign-in |
+| MFA enabled | 2FA required | Continue after valid code |
+| Captcha required | Captcha required | Continue after valid challenge |
+| Auth success | Tokens issued | Authorized session (with status gates) |
