@@ -137,8 +137,6 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 
 There are 5 supported integration scenarios.
 
----
-
 ## 1) LoginMode — WhiteBird handles everything
 
 Use this scenario when the partner wants WhiteBird to fully own the user flow inside SDK.
