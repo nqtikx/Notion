@@ -133,9 +133,7 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 - User registration request: [register](../onboardingAPI/README.md#register-post-request)
 - User token request: [generate](../onboardingAPI/README.md#generate-tokens-request)
 
-## Integration scenarios
-
-There are 5 supported integration scenarios.
+### Integration scenarios
 
 ## 1) LoginMode — WhiteBird handles everything
 
