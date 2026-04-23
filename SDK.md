@@ -128,60 +128,77 @@ It implies a seamless transition from the client’s app to the WhiteBird platfo
 
 The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
 
-- User registration request: [register](../onboardingAPI/README.md#register-post-request)
+- User registration request: [register](../onboardingAPI/REAпDME.md#register-post-request)
 - User token request: [generate](../onboardingAPI/README.md#generate-tokens-request)
 
-### Integration scenarios
+## Integration scenarios
 
-Below are the integration scenarios supported by the current backend and SDK contract.
+Below are production integration scenarios aligned with current backend and SDK contract.
 
-#### 1) Full PID data (Identification Agent flow)
+### 1) Identification Agent (full PID data)
 
-Use this scenario when the partner already has a complete user identity profile and sends full KYC data to WhiteBird via backend-to-backend APIs.
+Use when partner already has full PID/KYC data and sends it to WhiteBird via B2B APIs.
 
 Flow:
 1. Register user with full KYC payload:  
    `POST /api/v2/kyc/merchant/client/register`
-2. Check current client status (recommended):  
+2. Receive `clientId` (response: `{ id, status }`).
+3. (Optional) Check current status:  
    `POST /api/v2/kyc/merchant/client/status`
-3. If required for this client, process crypto test:  
-   - `GET /api/v2/kyc/merchant/client/crypto-test?clientId=...`  
-   - `POST /api/v2/kyc/merchant/client/crypto-test`
 4. Generate SDK tokens:  
    `POST /api/v2/auth/merchant/client/token/generate`
 5. Start SDK in `TokensMode` with generated tokens.
+6. SDK applies status/compliance gates and opens exchange after required checks.
 
-#### 2) Partial data bootstrap (email/phone)
+---
 
-Use this scenario when the partner does not have full KYC data and only needs to bootstrap SDK access with basic user identity.
+### 2) Non-agent bootstrap (email + phone)
+
+Use when partner does not provide full PID and delegates verification flow to WhiteBird.
 
 Flow:
-1. Register merchant client with lightweight payload:  
+1. Register user with lightweight payload:  
    `POST /api/v2/auth/merchant/client/register`
-2. Generate SDK tokens:  
+2. Receive `clientId` (response: `{ id, status }`).
+3. Generate SDK tokens:  
    `POST /api/v2/auth/merchant/client/token/generate`
-3. Start SDK in `TokensMode`
-4. User completes remaining verification/KYC steps inside SDK if required by status.
+4. Start SDK in `TokensMode`.
+5. User completes remaining verification steps in SDK.
+6. User may enter `PENDING` while waiting for AML/KYC decision.
+7. (Partner-side, optional) process notifications/webhooks and apply internal reconciliation/risk rules.
 
-#### 3) SDK-driven onboarding (no pre-registration on partner side)
+Second and subsequent logins typically repeat token generation + SDK start steps.
 
-Use this scenario when the partner delegates user auth/registration UX to SDK.
+---
+
+### 3) SDK-driven onboarding (no pre-registration on partner side)
+
+Use when partner fully delegates onboarding UX to SDK and does not pre-register user in partner backend before SDK start.
 
 Flow:
-1. Start SDK in `LoginMode` or `AuthMode`
-2. User completes sign-in/sign-up inside SDK
-3. SDK applies status-based routing (verification / pending AML / crypto-test gate if required)
-4. In `AuthMode`, partner receives token payload via `onLogin(...)` for custom integration.
+1. Start SDK in `LoginMode` or `AuthMode`.
+2. User completes sign-in/sign-up in SDK.
+3. SDK routes by status/compliance gates.
+4. If `AuthMode` is used, partner receives tokens via `onLogin(...)` and continues in custom flow or reopens SDK in `TokensMode`.
 
-#### KYC path inside SDK (when client wants user to complete KYC in SDK UI)
+---
 
-Status-driven flow:
-- `NOT_VERIFIED` -> verification agreements -> SumSub
-- `ON_VERIFICATION` -> waiting AML decision
-- `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` -> crypto test required
-- `VERIFIED` and compliant -> exchange/wallet operations available
+### 4) TokensMode without pre-registration (production path)
 
-> Note: `POST /api/v2/auth/merchant/client/token/generate` returns `token` and `refreshToken`.  
+Use when partner does not keep pre-registration state on their side, but still wants direct entry to SDK via tokens.
+
+Flow:
+1. Partner receives user identifier from own auth context (e.g. internal user id).
+2. Partner ensures WhiteBird `clientId` exists:
+   - either creates lightweight user via  
+     `POST /api/v2/auth/merchant/client/register`
+   - or uses previously stored partner-side mapping (`userId -> clientId` / `externalClientId`).
+3. Partner generates tokens:  
+   `POST /api/v2/auth/merchant/client/token/generate`
+4. Partner starts SDK in `TokensMode` with returned `token`/`refreshToken`.
+5. User enters SDK without login screen; SDK enforces remaining status/compliance steps before exchange access.
+
+This is a supported production approach when partner controls backend token orchestration.
 
 ## Adding to a website
 
