@@ -157,7 +157,7 @@ wbExchangeSdk.setup({
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
-    console.log("User data received", email, accessToken, refreshToken);
+    console.log("", email, accessToken, refreshToken);
   },
 });
 ```
@@ -189,7 +189,7 @@ wbExchangeSdk.setup({
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
-    console.log("User data received", email, accessToken, refreshToken);
+    console.log("", email, accessToken, refreshToken);
   },
 });
 ```
@@ -247,7 +247,7 @@ wbExchangeSdk.setup({
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
-    console.log("Login success", email, accessToken, refreshToken, isUserVerified);
+    console.log("", email, accessToken, refreshToken, isUserVerified);
   },
 });
 ```
@@ -278,7 +278,7 @@ wbExchangeSdk.setup({
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
-    console.log("Client tokens received", email, accessToken, refreshToken, isUserVerified);
+    console.log("", email, accessToken, refreshToken, isUserVerified);
   },
 });
 ```
