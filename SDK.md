@@ -236,7 +236,6 @@ Use this scenario when the partner wants WhiteBird to handle authentication, onb
 3. User completes onboarding and KYC inside WhiteBird SDK.
 4. After successful authorization, SDK returns client tokens via `onLogin(...)`.
 5. Partner uses these client tokens for further API integration through client endpoints.
-6. Partner may continue its own custom flow or reopen SDK for the next step.
 
 **Example**
 ```js
@@ -268,7 +267,6 @@ Use this scenario when the partner keeps login and onboarding on its side, deleg
 3. User completes required KYC / compliance steps in WhiteBird.
 4. SDK returns client tokens via `onLogin(...)` if they are needed for follow-up steps.
 5. Partner continues operational flow via merchant endpoints (server-to-server with `x-api-key`).
-6. Exchange becomes available according to the agreed integration design.
 
 **Example**
 ```js
@@ -284,14 +282,6 @@ wbExchangeSdk.setup({
   },
 });
 ```
-## Notes applicable to all scenarios
-
-- SDK always applies status/compliance routing.
-- Typical client statuses: `NOT_VERIFIED`, `PENDING`, `VERIFIED`, `FROZEN`, `ARREST`.
-- If `testingNeeded=true` and `testingCompleted=false`, user must pass crypto test before full exchange access.
-- For `TokensMode`, both `accessToken` and `refreshToken` are required; otherwise SDK iframe will not be created.
-- `onLogin` is fired only in `AuthMode`.
-- `onUserData` is fired only in `LoginMode`.
 
 ## Adding to a website
 
