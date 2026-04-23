@@ -1,3 +1,0 @@
-# Documentation
-
-- [SDK](SDK.md)
