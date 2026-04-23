@@ -35,9 +35,11 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 | Condition | SDK behavior | Result |
 |---|---|---|
 | `NOT_VERIFIED` | Verification is required | Agreements -> SumSub |
-| `PENDING` | Access is limited | Wait AML decision |
-| `VERIFIED` + crypto test required | Crypto test gate | Complete crypto test |
-| `VERIFIED` and compliant | Full access | Exchange / wallet operations |
+| `PENDING` | Access is limited | Wait AML/KYC decision |
+| `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` | Crypto test gate | Complete crypto test |
+| `VERIFIED` + compliance checks passed | Full access | Exchange / wallet operations |
+| `FROZEN` | Restricted mode | Operations are limited or blocked by policy |
+| `ARREST` | Blocked mode | Exchange access denied |
 
 ---
 
