@@ -153,7 +153,7 @@ wbExchangeSdk.setup({
   // required params:
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
-  merchantId: "11111111-1111-1111-1111-111111111111",
+  merchantId: "xxxx",
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
@@ -185,7 +185,7 @@ wbExchangeSdk.setup({
   // required params:
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
-  merchantId: "11111111-1111-1111-1111-111111111111",
+  merchantId: "xxxx",
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
@@ -219,11 +219,11 @@ wbExchangeSdk.setup({
   // required params:
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.TokensMode,
-  merchantId: "11111111-1111-1111-1111-111111111111",
+  merchantId: "xxxx",
 
   // TokensMode
-  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.accessToken.example",
-  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.refreshToken.example",
+  accessToken: "****",
+  refreshToken: "****",
 });
 ```
 ### 4) AuthMode — onboarding and KYC in WhiteBird, then API integration with client tokens
@@ -243,7 +243,7 @@ wbExchangeSdk.setup({
   // required params:
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
-  merchantId: "11111111-1111-1111-1111-111111111111",
+  merchantId: "xxxx",
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
@@ -274,7 +274,7 @@ wbExchangeSdk.setup({
   // required params:
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
-  merchantId: "11111111-1111-1111-1111-111111111111",
+  merchantId: "xxxx",
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
