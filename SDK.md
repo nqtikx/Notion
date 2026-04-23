@@ -133,9 +133,9 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 - User registration request: [register](../onboardingAPI/README.md#register-post-request)
 - User token request: [generate](../onboardingAPI/README.md#generate-tokens-request)
 
-### Integration scenarios
+## Integration scenarios
 
-## 1) LoginMode — WhiteBird handles everything
+### 1) LoginMode — WhiteBird handles everything
 
 Use this scenario when the partner wants WhiteBird to fully own the user flow inside SDK.
 
@@ -171,7 +171,7 @@ wbExchangeSdk.setup({
   debug: false,
 });
 ```
-## 2) API register + tokens + LoginMode — pre-registration on partner side, sign-in in SDK
+### 2) API register + tokens + LoginMode — pre-registration on partner side, sign-in in SDK
 
 Use this scenario when the partner pre-registers a user on its side and in WhiteBird, but still wants WhiteBird to own sign-in, onboarding, and KYC UX via `LoginMode`.
 
