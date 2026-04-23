@@ -137,7 +137,7 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 
 Below are production integration scenarios aligned with current backend and SDK contract.
 
-### 1) Identification Agent (full PID data)
+### 1) Identification Agent (full KYC data)
 
 Use when partner already has full KYC data and sends it to WhiteBird via B2B APIs.
 
