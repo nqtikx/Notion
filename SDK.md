@@ -128,7 +128,7 @@ It implies a seamless transition from the client’s app to the WhiteBird platfo
 
 The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
 
-- User registration request: [register](../onboardingAPI/REAпDME.md#register-post-request)
+- User registration request: [register](../onboardingAPI/README.md#register-post-request)
 - User token request: [generate](../onboardingAPI/README.md#generate-tokens-request)
 
 ## Integration scenarios
@@ -180,6 +180,7 @@ Flow:
 2. User completes sign-in/sign-up in SDK.
 3. SDK routes by status/compliance gates.
 4. If `AuthMode` is used, partner receives tokens via `onLogin(...)` and continues in custom flow or reopens SDK in `TokensMode`.
+5. If `LoginMode` is used, partner may receive user tokens via `onUserData(...)`.
 
 ---
 
@@ -220,7 +221,7 @@ Example initialization of SDK in ```LoginMode```:
 wbExchangeSdk.setup({
   // container for embedding SDK
   el: document.getElementById("wbExchangeSdkWrapper"),
-  // client id
+  // merchant id
   merchantId: 'xxxx',
   mode: wbExchangeSdk.mode.LoginMode,
 })
