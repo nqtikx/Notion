@@ -268,6 +268,8 @@ Use this scenario when the partner keeps login and onboarding on its side, deleg
 4. SDK returns client tokens via `onLogin(...)` if they are needed for follow-up steps.
 5. Partner continues operational flow via merchant endpoints (server-to-server with `x-api-key`).
 
+Repeated logins usually repeat the steps of token generate -> SDK open”
+
 **Example**
 ```js
 wbExchangeSdk.setup({
