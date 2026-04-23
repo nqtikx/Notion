@@ -1,3 +1,3 @@
 # Documentation
 
-- [SDK](sdk.md)
+- [SDK](SDK.md)
