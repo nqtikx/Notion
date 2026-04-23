@@ -137,7 +137,7 @@ Below are production integration scenarios aligned with current backend and SDK 
 
 ### 1) Identification Agent (full PID data)
 
-Use when partner already has full PID/KYC data and sends it to WhiteBird via B2B APIs.
+Use when partner already has full KYC data and sends it to WhiteBird via B2B APIs.
 
 Flow:
 1. Register user with full KYC payload:  
@@ -154,7 +154,7 @@ Flow:
 
 ### 2) Non-agent bootstrap (email + phone)
 
-Use when partner does not provide full PID and delegates verification flow to WhiteBird.
+Use when partner does not provide full KYC and delegates verification flow to WhiteBird.
 
 Flow:
 1. Register user with lightweight payload:  
