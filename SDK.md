@@ -147,12 +147,6 @@ Use this scenario when the partner wants WhiteBird to fully own the user flow in
 5. SDK routes the user according to status and compliance rules.
 6. Once all required checks are completed, SDK opens exchange flow.
 
-**Ownership**
-- Login / sign-up — WhiteBird
-- Onboarding — WhiteBird
-- KYC — WhiteBird
-- Exchange access — WhiteBird SDK
-
 **Example**
 ```js
 wbExchangeSdk.setup({
@@ -165,10 +159,6 @@ wbExchangeSdk.setup({
   onUserData: ({ email, accessToken, refreshToken }) => {
     console.log("User data received", email, accessToken, refreshToken);
   },
-
-  // optional params:
-  showBackButtonOnHomePage: true,
-  debug: false,
 });
 ```
 ### 2) API register + tokens + LoginMode — pre-registration on partner side, sign-in in SDK
@@ -189,10 +179,6 @@ Use this scenario when the partner pre-registers a user on its side and in White
 4. SDK routes user according to status and compliance rules.
 5. After required checks are completed, exchange becomes available in SDK.
 
-**Ownership**
-- Partner — user registration and entry initiation
-- WhiteBird — sign-in UX, SDK onboarding steps, KYC, exchange access
-
 **Example**
 ```js
 wbExchangeSdk.setup({
@@ -205,12 +191,6 @@ wbExchangeSdk.setup({
   onUserData: ({ email, accessToken, refreshToken }) => {
     console.log("User data received", email, accessToken, refreshToken);
   },
-
-  // optional params:
-  externalClientId: "bank-user-002",
-  email: "user@example.com",
-  showBackButtonOnHomePage: true,
-  debug: false,
 });
 ```
 ### 3) API KYC register + tokens + TokensMode — partner is an identification agent
@@ -233,10 +213,6 @@ Use this scenario when the partner already has full KYC/PID data and sends it to
 3. If any remaining verification step is required, user completes it in SDK.
 4. After required checks are completed, exchange becomes available in SDK.
 
-**Ownership**
-- Partner — primary identification/KYC, onboarding, pre-registration, token issuance
-- WhiteBird — residual compliance/status checks, exchange access
-
 **Example**
 ```js
 wbExchangeSdk.setup({
@@ -248,12 +224,6 @@ wbExchangeSdk.setup({
   // TokensMode
   accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.accessToken.example",
   refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.refreshToken.example",
-
-  // optional params:
-  isAuthAgent: true,
-  externalClientId: "bank-user-003",
-  showBackButtonOnHomePage: true,
-  debug: false,
 });
 ```
 ### 4) AuthMode — onboarding and KYC in WhiteBird, then API integration with client tokens
@@ -268,10 +238,6 @@ Use this scenario when the partner wants WhiteBird to handle authentication, onb
 5. Partner uses these client tokens for further API integration through client endpoints.
 6. Partner may continue its own custom flow or reopen SDK for the next step.
 
-**Ownership**
-- WhiteBird — auth / onboarding / KYC UX
-- Partner — downstream API integration via client tokens and client endpoints
-
 **Example**
 ```js
 wbExchangeSdk.setup({
@@ -284,10 +250,6 @@ wbExchangeSdk.setup({
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
     console.log("Login success", email, accessToken, refreshToken, isUserVerified);
   },
-
-  // optional params:
-  showBackButtonOnHomePage: true,
-  debug: false,
 });
 ```
 ### 5) API register + tokens + AuthMode — login/onboarding on partner side, KYC in WhiteBird, merchant API after that
@@ -308,10 +270,6 @@ Use this scenario when the partner keeps login and onboarding on its side, deleg
 5. Partner continues operational flow via merchant endpoints (server-to-server with `x-api-key`).
 6. Exchange becomes available according to the agreed integration design.
 
-**Ownership**
-- Partner — login, onboarding, operational orchestration via merchant endpoints
-- WhiteBird — KYC / compliance UX in SDK
-
 **Example**
 ```js
 wbExchangeSdk.setup({
@@ -324,11 +282,6 @@ wbExchangeSdk.setup({
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
     console.log("Client tokens received", email, accessToken, refreshToken, isUserVerified);
   },
-
-  // optional params:
-  externalClientId: "bank-user-004",
-  showBackButtonOnHomePage: true,
-  debug: false,
 });
 ```
 ## Notes applicable to all scenarios
