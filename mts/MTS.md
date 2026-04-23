@@ -1,33 +1,35 @@
 # MTS
 
-## Available currencies:
+## MTS
 
-- RUB
+### Available currencies:
 
-## Available Bank Card By Region:
+* RUB
 
-- Russia
+### Available Bank Card By Region:
 
-## Directions & Commission:
+* Russia
 
-- Buy Crypto 2,5 %
-- Sell Crypto 2 %
+### Directions & Commission:
 
-## Flow for binding card:
+* Buy Crypto 2,5 %
+* Sell Crypto 2 %
 
-![image.png](MTS/image.png)
+### Flow for binding card:
 
-## First step
+![image.png](../.gitbook/assets/image.png)
+
+### First step
 
 Verify that the payment provider is available
 
-### POST api/v2/exchange/merchant/payment/provider
+#### POST api/v2/exchange/merchant/payment/provider
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -37,7 +39,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -68,21 +70,21 @@ x-api-key
 
 ```
 
-It is sufficient to verify that the payment provider is available via the id field.  id = MTS 
+It is sufficient to verify that the payment provider is available via the id field. id = MTS
 
-## Second step
+### Second step
 
 Generate link to bind client card
 
-### POST api/v2/exchange/merchant/payment/card/bind
+#### POST api/v2/exchange/merchant/payment/card/bind
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
-`returnUrl` - Link to the resource where the client should be redirected after binding the card 
+`returnUrl` - Link to the resource where the client should be redirected after binding the card
 
 ```jsx
 {
@@ -92,7 +94,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -100,24 +102,22 @@ x-api-key
 }
 ```
 
-# Third step
+## Third step
 
-Open link for the client to bind their card 
+Open link for the client to bind their card
 
-Test card data:
-Choose country: Russia, Kazakhstan, Kyrgyzstan, Uzbekistan
-Number: 4469157300098872
+Test card data: Choose country: Russia, Kazakhstan, Kyrgyzstan, Uzbekistan Number: 4469157300098872
 
-                                                                Enter card details
+```
+                                                            Enter card details
+```
 
-![Снимок экрана 2026-03-30 в 22.41.40.png](MTS/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA_%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0_2026-03-30_%D0%B2_22.41.40.png)
-
-  How can I find out the result of a card binding?  
+How can I find out the result of a card binding?\
 Use webhooks from Whitebird or use the request from step four
 
-### There are three webhooks from Whitebird:
+#### There are three webhooks from Whitebird:
 
-### client.payment.method.binding
+#### client.payment.method.binding
 
 Сlient initiated card binding
 
@@ -132,7 +132,7 @@ Use webhooks from Whitebird or use the request from step four
 }
 ```
 
-### client.payment.method.bound
+#### client.payment.method.bound
 
 Сlient's card was successfully bound
 
@@ -147,7 +147,7 @@ Use webhooks from Whitebird or use the request from step four
 
 ```
 
-### client.payment.method.failed
+#### client.payment.method.failed
 
 Сlient did not bind the card or the binding was declined by the bank
 
@@ -166,17 +166,17 @@ Use webhooks from Whitebird or use the request from step four
 
 If the client has successfully bound their card, you can get the card id in Whitebird as the paymentToken value
 
-# Fourth step
+## Fourth step
 
-Get available payment methods for the client 
+Get available payment methods for the client
 
-### POST api/v2/exchange/merchant/payment/method
+#### POST api/v2/exchange/merchant/payment/method
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -186,7 +186,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -204,19 +204,19 @@ x-api-key
 
 If the card status is ENABLED, the id field value can be used for the exchange operation as the paymentToken field
 
-# Buy Crypto Flow:
+## Buy Crypto Flow:
 
-## First step
+### First step
 
-Get available payment methods for the client 
+Get available payment methods for the client
 
-### POST api/v2/exchange/merchant/payment/method
+#### POST api/v2/exchange/merchant/payment/method
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -226,7 +226,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 [
@@ -244,17 +244,17 @@ x-api-key
 ]
 ```
 
-## Second step
+### Second step
 
 To create a quota, use id **`api/v2/exchange/merchant/payment/method`** where MTS is enabled
 
-### POST api/v2/exchange/merchant/quote
+#### POST api/v2/exchange/merchant/quote
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -274,7 +274,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -300,17 +300,17 @@ x-api-key
 }
 ```
 
-## Third step
+### Third step
 
-Create an order specifying `returnUrl` and `failUrl` (optional) after quote creation
+Create an order specifying `returnUrl` and `failUrl` (optional) after quote creation
 
-### GET api/v2/exchange/merchant/buy?quoteId=c6d3c3b2-78ce-4374-8272-9bd2a9160a5d&returnUrl=https://www.google.com&failUrl=https://www.google.com
+#### GET api/v2/exchange/merchant/buy?quoteId=c6d3c3b2-78ce-4374-8272-9bd2a9160a5d\&returnUrl=https://www.google.com\&failUrl=https://www.google.com
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -322,25 +322,23 @@ x-api-key
 }
 ```
 
-## Fourth step
+### Fourth step
 
-### **Payment confirmation step (MTS Bank)**
+#### **Payment confirmation step (MTS Bank)**
 
-In production flow, after order creation the client must complete payment in the **MTS Bank mobile app**:
+In production flow, after order creation the client must complete payment in the **MTS Bank mobile app**:
 
 **“Transfers abroad” → “Belarus” → “RUB” → Enter amount → “WhiteBird” → Enter order number → Confirm transfer.**
 
-![Снимок экрана 2026-03-31 в 10.50.08.png](MTS/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA_%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0_2026-03-31_%D0%B2_10.50.08.png)
+### **Check order status**
 
-## **Check order status**
+#### GET /api/v2/exchange/merchant/order?orderId=1492954d-a1c5-40f9-9dde-abac06278504
 
-### GET /api/v2/exchange/merchant/order?orderId=1492954d-a1c5-40f9-9dde-abac06278504
+#### Request Header:
 
-### Request Header:
+x-api-key
 
-x-api-key 
-
-### Response:
+#### Response:
 
 ```jsx
 {

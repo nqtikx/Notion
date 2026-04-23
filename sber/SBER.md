@@ -1,29 +1,31 @@
 # SBER
 
+## SBER
+
 SBER is a payment provider for RUB operations. In merchant configuration it can be routed via CA-type payment system.
 
-## Available currencies:
+### Available currencies:
 
-- RUB
+* RUB
 
-## Available Bank Card By Region:
+### Available Bank Card By Region:
 
-- Russia
+* Russia
 
-## Directions & Commission:
+### Directions & Commission:
 
-- Buy Crypto 1.5%
-- Sell Crypto - not available in current configuration
+* Buy Crypto 1.5%
+* Sell Crypto - not available in current configuration
 
-## Verify that the payment provider is available
+### Verify that the payment provider is available
 
-### POST api/v2/exchange/merchant/payment/provider
+#### POST api/v2/exchange/merchant/payment/provider
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -33,7 +35,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -63,21 +65,21 @@ x-api-key
         },
 ```
 
-It is sufficient to verify that the payment provider is available via the id field.  id = SBER 
+It is sufficient to verify that the payment provider is available via the id field. id = SBER
 
-# Buy Crypto Flow:
+## Buy Crypto Flow:
 
-## First step
+### First step
 
-Get available payment methods for the client 
+Get available payment methods for the client
 
-### POST api/v2/exchange/merchant/payment/method
+#### POST api/v2/exchange/merchant/payment/method
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -87,7 +89,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 [
@@ -100,19 +102,19 @@ x-api-key
 ]
 ```
 
-If `SBER` is not returned (or returned with non-`ENABLED` status), this means `BUY` via SBER is not available for the current client/merchant/environment
+If `SBER` is not returned (or returned with non-`ENABLED` status), this means `BUY` via SBER is not available for the current client/merchant/environment
 
-## Second step
+### Second step
 
 Create a deposit for the selected SBER payment method
 
-### POST api/v2/exchange/merchant/balance/fiat/deposit
+#### POST api/v2/exchange/merchant/balance/fiat/deposit
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -128,7 +130,7 @@ x-api-key
 
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
@@ -142,31 +144,29 @@ x-api-key
 }
 ```
 
-## Third step
+### Third step
 
-In production flow, after SBER deposit creation the client must complete payment in the **SberBank mobile app:**
+In production flow, after SBER deposit creation the client must complete payment in the **SberBank mobile app:**
 
-![Снимок экрана 2026-04-02 в 16.07.56.png](SBER/%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA_%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0_2026-04-02_%D0%B2_16.07.56.png)
-
-**“A push notification has been sent to phone `+375295805525`. Open the SberBank mobile app and complete payment.”**
+**“A push notification has been sent to phone `+375295805525`. Open the SberBank mobile app and complete payment.”**
 
 If push is not received, use fallback path in app:
 
 **“Select the account payment card above the wallet and complete payment there.”**
 
-After confirmation in Sber app, keep polling merchant balance operation status **`(fourth step)`** until final state (**`PROCESSED`** / **`DECLINED`**).
+After confirmation in Sber app, keep polling merchant balance operation status **`(fourth step)`** until final state (**`PROCESSED`** / **`DECLINED`**).
 
-## Fourth step
+### Fourth step
 
- Check current fiat operation status for this client.
+Check current fiat operation status for this client.
 
-### POST api/v2/exchange/merchant/balance/operation?page=0&size=10&sort=creationDate,desc
+#### POST api/v2/exchange/merchant/balance/operation?page=0\&size=10\&sort=creationDate,desc
 
-### Request Header:
+#### Request Header:
 
-x-api-key 
+x-api-key
 
-### Request Body:
+#### Request Body:
 
 ```jsx
 {
@@ -174,7 +174,7 @@ x-api-key
 }
 ```
 
-### Response:
+#### Response:
 
 ```jsx
 {
