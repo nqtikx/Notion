@@ -135,73 +135,214 @@ The main feature enabled by this is the use of SDK in TokensMode. The user will 
 
 ## Integration scenarios
 
-Below are production integration scenarios aligned with current backend and SDK contract.
-
-### 1) Identification Agent (full KYC data)
-
-Use when partner already has full KYC data and sends it to WhiteBird via B2B APIs.
-
-Flow:
-1. Register user with full KYC payload:  
-   `POST /api/v2/kyc/merchant/client/register`
-2. Receive `clientId` (response: `{ id, status }`).
-3. (Optional) Check current status:  
-   `POST /api/v2/kyc/merchant/client/status`
-4. Generate SDK tokens:  
-   `POST /api/v2/auth/merchant/client/token/generate`
-5. Start SDK in `TokensMode` with generated tokens.
-6. SDK applies status/compliance gates and opens exchange after required checks.
+There are 5 supported integration scenarios.
 
 ---
 
-### 2) Non-agent bootstrap (email + phone)
+## 1) LoginMode — WhiteBird handles everything
 
-Use when partner does not provide full KYC and delegates verification flow to WhiteBird.
+Use this scenario when the partner wants WhiteBird to fully own the user flow inside SDK.
 
-Flow:
-1. Register user with lightweight payload:  
+**Flow**
+1. Partner opens WhiteBird SDK in `LoginMode`.
+2. User signs in or signs up inside SDK.
+3. User completes onboarding steps inside SDK.
+4. User completes KYC / compliance / crypto test steps if required.
+5. SDK routes the user according to status and compliance rules.
+6. Once all required checks are completed, SDK opens exchange flow.
+
+**Ownership**
+- Login / sign-up — WhiteBird
+- Onboarding — WhiteBird
+- KYC — WhiteBird
+- Exchange access — WhiteBird SDK
+
+**Example**
+```js
+wbExchangeSdk.setup({
+  // required params:
+  el: document.getElementById("wbExchangeSdkWrapper"),
+  mode: wbExchangeSdk.mode.LoginMode,
+  merchantId: "11111111-1111-1111-1111-111111111111",
+
+  // LoginMode
+  onUserData: ({ email, accessToken, refreshToken }) => {
+    console.log("User data received", email, accessToken, refreshToken);
+  },
+
+  // optional params:
+  showBackButtonOnHomePage: true,
+  debug: false,
+});
+```
+## 2) API register + tokens + LoginMode — pre-registration on partner side, sign-in in SDK
+
+Use this scenario when the partner pre-registers a user on its side and in WhiteBird, but still wants WhiteBird to own sign-in, onboarding, and KYC UX via `LoginMode`.
+
+**Backend flow**
+1. Partner registers user backend-to-backend in WhiteBird with lightweight payload (`email`, `phone`):  
    `POST /api/v2/auth/merchant/client/register`
-2. Receive `clientId` (response: `{ id, status }`).
-3. Generate SDK tokens:  
+2. Partner receives `clientId` (`{ id, status }`).
+3. (Optional) Partner generates tokens backend-to-backend for its own orchestration:  
    `POST /api/v2/auth/merchant/client/token/generate`
-4. Start SDK in `TokensMode`.
-5. User completes remaining verification steps in SDK.
-6. User may enter `PENDING` while waiting for AML/KYC decision.
-7. (Partner-side, optional) process notifications/webhooks and apply internal reconciliation/risk rules.
 
-Second and subsequent logins typically repeat token generation + SDK start steps.
+**User flow**
+1. Partner opens WhiteBird SDK in `LoginMode`.
+2. User signs in or signs up inside SDK.
+3. User completes onboarding / KYC / compliance steps in SDK.
+4. SDK routes user according to status and compliance rules.
+5. After required checks are completed, exchange becomes available in SDK.
 
----
+**Ownership**
+- Partner — user registration and entry initiation
+- WhiteBird — sign-in UX, SDK onboarding steps, KYC, exchange access
 
-### 3) SDK-driven onboarding (no pre-registration on partner side)
+**Example**
+```js
+wbExchangeSdk.setup({
+  // required params:
+  el: document.getElementById("wbExchangeSdkWrapper"),
+  mode: wbExchangeSdk.mode.LoginMode,
+  merchantId: "11111111-1111-1111-1111-111111111111",
 
-Use when partner fully delegates onboarding UX to SDK and does not pre-register user in partner backend before SDK start.
+  // LoginMode
+  onUserData: ({ email, accessToken, refreshToken }) => {
+    console.log("User data received", email, accessToken, refreshToken);
+  },
 
-Flow:
-1. Start SDK in `LoginMode` or `AuthMode`.
-2. User completes sign-in/sign-up in SDK.
-3. SDK routes by status/compliance gates.
-4. If `AuthMode` is used, partner receives tokens via `onLogin(...)` and continues in custom flow or reopens SDK in `TokensMode`.
-5. If `LoginMode` is used, partner may receive user tokens via `onUserData(...)`.
+  // optional params:
+  externalClientId: "bank-user-002",
+  email: "user@example.com",
+  showBackButtonOnHomePage: true,
+  debug: false,
+});
+```
+### 3) API KYC register + tokens + TokensMode — partner is an identification agent
 
----
+Use this scenario when the partner already has full KYC/PID data and sends it to WhiteBird. Partner owns onboarding and KYC on its side, and SDK is used only for final compliance checks and exchange access.
 
-### 4) TokensMode without pre-registration (production path)
-
-Use when partner does not keep pre-registration state on their side, but still wants direct entry to SDK via tokens.
-
-Flow:
-1. Partner receives user identifier from own auth context (e.g. internal user id).
-2. Partner ensures WhiteBird `clientId` exists:
-   - either creates lightweight user via  
-     `POST /api/v2/auth/merchant/client/register`
-   - or uses previously stored partner-side mapping (`userId -> clientId` / `externalClientId`).
-3. Partner generates tokens:  
+**Backend flow**
+1. Partner registers user backend-to-backend with full KYC payload:  
+   `POST /api/v2/kyc/merchant/client/register`
+2. Partner receives `clientId` (`{ id, status }`).
+3. (Optional) Partner checks current status:  
+   `POST /api/v2/kyc/merchant/client/status`
+4. Partner generates tokens backend-to-backend:  
    `POST /api/v2/auth/merchant/client/token/generate`
-4. Partner starts SDK in `TokensMode` with returned `token`/`refreshToken`.
-5. User enters SDK without login screen; SDK enforces remaining status/compliance steps before exchange access.
+5. Partner starts SDK in `TokensMode` with issued tokens.
 
-This is a supported production approach when partner controls backend token orchestration.
+**User flow**
+1. User enters SDK already authorized by tokens (no login / sign-up screen).
+2. SDK applies status / compliance gates.
+3. If any remaining verification step is required, user completes it in SDK.
+4. After required checks are completed, exchange becomes available in SDK.
+
+**Ownership**
+- Partner — primary identification/KYC, onboarding, pre-registration, token issuance
+- WhiteBird — residual compliance/status checks, exchange access
+
+**Example**
+```js
+wbExchangeSdk.setup({
+  // required params:
+  el: document.getElementById("wbExchangeSdkWrapper"),
+  mode: wbExchangeSdk.mode.TokensMode,
+  merchantId: "11111111-1111-1111-1111-111111111111",
+
+  // TokensMode
+  accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.accessToken.example",
+  refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.agent.refreshToken.example",
+
+  // optional params:
+  isAuthAgent: true,
+  externalClientId: "bank-user-003",
+  showBackButtonOnHomePage: true,
+  debug: false,
+});
+```
+### 4) AuthMode — onboarding and KYC in WhiteBird, then API integration with client tokens
+
+Use this scenario when the partner wants WhiteBird to handle authentication, onboarding, and KYC, and then continue via client tokens and client endpoints on partner side.
+
+**Flow**
+1. Partner starts SDK in `AuthMode`.
+2. User signs in or signs up inside SDK.
+3. User completes onboarding and KYC inside WhiteBird SDK.
+4. After successful authorization, SDK returns client tokens via `onLogin(...)`.
+5. Partner uses these client tokens for further API integration through client endpoints.
+6. Partner may continue its own custom flow or reopen SDK for the next step.
+
+**Ownership**
+- WhiteBird — auth / onboarding / KYC UX
+- Partner — downstream API integration via client tokens and client endpoints
+
+**Example**
+```js
+wbExchangeSdk.setup({
+  // required params:
+  el: document.getElementById("wbExchangeSdkWrapper"),
+  mode: wbExchangeSdk.mode.AuthMode,
+  merchantId: "11111111-1111-1111-1111-111111111111",
+
+  // AuthMode
+  onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
+    console.log("Login success", email, accessToken, refreshToken, isUserVerified);
+  },
+
+  // optional params:
+  showBackButtonOnHomePage: true,
+  debug: false,
+});
+```
+### 5) API register + tokens + AuthMode — login/onboarding on partner side, KYC in WhiteBird, merchant API after that
+
+Use this scenario when the partner keeps login and onboarding on its side, delegates KYC UX to WhiteBird via SDK, and continues the operational flow via merchant endpoints.
+
+**Backend flow**
+1. Partner registers user backend-to-backend in WhiteBird:  
+   `POST /api/v2/auth/merchant/client/register`
+2. Partner generates tokens backend-to-backend:  
+   `POST /api/v2/auth/merchant/client/token/generate`
+
+**User flow**
+1. Partner handles login and onboarding on its own side.
+2. Partner opens WhiteBird SDK in `AuthMode` for KYC / compliance UX.
+3. User completes required KYC / compliance steps in WhiteBird.
+4. SDK returns client tokens via `onLogin(...)` if they are needed for follow-up steps.
+5. Partner continues operational flow via merchant endpoints (server-to-server with `x-api-key`).
+6. Exchange becomes available according to the agreed integration design.
+
+**Ownership**
+- Partner — login, onboarding, operational orchestration via merchant endpoints
+- WhiteBird — KYC / compliance UX in SDK
+
+**Example**
+```js
+wbExchangeSdk.setup({
+  // required params:
+  el: document.getElementById("wbExchangeSdkWrapper"),
+  mode: wbExchangeSdk.mode.AuthMode,
+  merchantId: "11111111-1111-1111-1111-111111111111",
+
+  // AuthMode
+  onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
+    console.log("Client tokens received", email, accessToken, refreshToken, isUserVerified);
+  },
+
+  // optional params:
+  externalClientId: "bank-user-004",
+  showBackButtonOnHomePage: true,
+  debug: false,
+});
+```
+## Notes applicable to all scenarios
+
+- SDK always applies status/compliance routing.
+- Typical client statuses: `NOT_VERIFIED`, `PENDING`, `VERIFIED`, `FROZEN`, `ARREST`.
+- If `testingNeeded=true` and `testingCompleted=false`, user must pass crypto test before full exchange access.
+- For `TokensMode`, both `accessToken` and `refreshToken` are required; otherwise SDK iframe will not be created.
+- `onLogin` is fired only in `AuthMode`.
+- `onUserData` is fired only in `LoginMode`.
 
 ## Adding to a website
 
