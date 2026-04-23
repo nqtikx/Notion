@@ -72,7 +72,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 ### Scenarios
 - User confirms legal statements and offer agreement.
 - SDK runs SumSub (documents + liveness).
-- User enters AML pending state (`ON_VERIFICATION`) until decision.
+- User enters AML pending state (`PENDING`) until decision.
 - If approved, user becomes `VERIFIED`.
 - If crypto test is required, it must be completed before full access.
 
@@ -81,7 +81,7 @@ Descriptions of each mode are available [below](#brief-description-of-modes) in 
 | Condition | Behavior | Result |
 |---|---|---|
 | Agreements not confirmed | Verification blocked | Stay on agreements |
-| SumSub completed, AML pending | Limited access | `ON_VERIFICATION` |
+| SumSub completed, AML pending | Limited access | `PENDING` |
 | AML approved | Verification done | `VERIFIED` |
 | Crypto test required | Additional gate | Complete test to continue |
 
