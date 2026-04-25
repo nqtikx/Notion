@@ -161,7 +161,7 @@ wbExchangeSdk.setup({
   },
 });
 ```
-### 2) API register + tokens + LoginMode — identification agent flow
+### 2) API register + tokens + LoginMode — partner-authenticated LoginMode flow
 
 Use this scenario when the partner performs registration and login on its side, generates WhiteBird client tokens backend-to-backend, and opens SDK in an already authenticated context.
 
