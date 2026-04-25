@@ -58,7 +58,6 @@ Core statuses used by exchange routing:
 - `ARREST`
 
 ### Notes
-- Provider/payment availability depends on merchant setup, provider config, and user restrictions.
 - v3 endpoints are preferred; v2 endpoints remain for compatibility.
 - Onboarding/register/token issuance are documented in a separate guide.
 
