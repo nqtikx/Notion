@@ -70,12 +70,7 @@ Below is a tested OnRamp flow with real request/response examples.
 ---
 ### Step 1. Get available assets
 **POST** `{{URL}}/api/v2/exchange/merchant/assets`
-**Request**
-```json
-{
-  "clientId": "{{clientId}}"
-}
-```
+
 **Response**
 ```json
 {
@@ -494,12 +489,7 @@ Below is a tested OffRamp flow with real request/response examples.
 ---
 ### Step 1. Get available assets
 **POST** `{{URL}}/api/v2/exchange/merchant/assets`
-**Request**
-```json
-{
-  "clientId": "{{clientId}}"
-}
-```
+
 **Response**
 ```json
 {
