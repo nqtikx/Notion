@@ -206,7 +206,9 @@ Response
 ```
 ### Step 3. Get payment methods
 **POST** {{URL}}/api/v2/exchange/merchant/payment/method
-> Take paymentToken (id) for the selected provider with status=ENABLED and isRestricted=false
+
+> Take paymentToken (id) for the selected provider with status=ENABLED and isRestricted=false.
+
 **Request**
 ```json
 {
@@ -274,7 +276,9 @@ Response
 ```
 ### Step 5. Create quote (v3)
 **POST** {{URL}}/api/v3/exchange/merchant/quote
+
 > From response take quoteId (id).
+
 **Request**
 ```json
 {
@@ -326,7 +330,9 @@ Response
 ```
 ### Step 6. Create order (v3)
 **POST** {{URL}}/api/v3/exchange/merchant/order
+
 > From response take orderId (id).
+
 **Request**
 ```json
 {
