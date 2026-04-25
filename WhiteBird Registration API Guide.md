@@ -30,7 +30,37 @@ The document is focused on:
 
 ## 1. Base principles
 
-_To be completed in the next section._
+### Scope
+WhiteBird Exchange API supports two directions:
+- **OnRamp**: `fiat -> crypto`
+- **OffRamp**: `crypto -> fiat`
+
+### API domains
+- **Merchant API** — backend-to-backend, auth via `x-api-key`.
+- **Client API** — user-context API:
+  - normally uses `Authorization: Bearer <accessToken>`;
+  - for some endpoints, anonymous mode is supported with `merchantId` in request body.
+
+### Recommended pipeline (v3-first)
+1. `assets`
+2. `payment/provider` (and `payment/method` if needed)
+3. `limit` (v3)
+4. `quote` (v3)
+5. `order create`
+6. `order status/current/history/reject`
+
+### Status routing
+Core statuses used by exchange routing:
+- `NOT_VERIFIED`
+- `PENDING`
+- `VERIFIED`
+- `FROZEN`
+- `ARREST`
+
+### Notes
+- Provider/payment availability depends on merchant setup, provider config, and user restrictions.
+- v3 endpoints are preferred; v2 endpoints remain for compatibility.
+- Onboarding/register/token issuance are documented in a separate guide.
 
 ## 2. OnRamp (fiat -> crypto) — Merchant API
 
