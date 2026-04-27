@@ -130,8 +130,8 @@ It implies a seamless transition from the client’s app to the WhiteBird platfo
 
 The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
 
-- User registration request: register
-- User token request: generate
+- User registration request: [register](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status)
+- User token request: [generate](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status)
 
 ## Integration scenarios
 
@@ -212,7 +212,7 @@ Use this scenario when the partner already has full KYC/PID data and sends it to
 1. Partner registers user backend-to-backend with full KYC payload:  
    `POST /api/v2/kyc/merchant/client/register`
 2. Partner receives `clientId` (`{ id, status }`).
-3. (Optional) Partner checks current status:  
+3. (Optional) [Partner checks current status](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status):  
    `POST /api/v2/kyc/merchant/client/status`
 4. Partner generates tokens backend-to-backend:  
    `POST /api/v2/auth/merchant/client/token/generate`
