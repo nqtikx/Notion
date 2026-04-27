@@ -154,6 +154,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
   merchantId: "xxxx",
+  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
@@ -187,6 +188,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
   merchantId: "xxxx",
+  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
 
   // partner-generated client tokens
   accessToken: "****",
@@ -229,6 +231,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.TokensMode,
   merchantId: "xxxx",
+  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
 
   // TokensMode
   accessToken: "****",
@@ -253,6 +256,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
   merchantId: "xxxx",
+  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
@@ -286,6 +290,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
   merchantId: "xxxx",
+  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
@@ -313,8 +318,6 @@ wbExchangeSdk.setup({
 **externalClientId** - string, should be provided by the merchant to link WhiteBird users with merchant’s users.
 
 **email** - string, allows pre-filling the email field to reduce user actions during WhiteBird login.
-
-**merchantPass** - string, optional parameter used for SDK session/auth context (passed into SDK configuration).
 
 **currencyAmount** - int, allows pre-filling the currency amount for the exchange.
 
