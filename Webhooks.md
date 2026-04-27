@@ -1,1 +1,405 @@
+# Webhooks
 
+WhiteBird webhooks allow partner systems to receive notifications about client, order, operation, and payment method events.
+
+The partner should expose a backend endpoint that accepts `POST` requests with a JSON payload.
+
+---
+
+## Client Webhooks
+
+### `client.created`
+
+This event is triggered when a new client is created.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "client.created",
+  "createdAt": "2024-05-23T08:30:21+0000",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+---
+
+### `client.pending`
+
+This event is triggered when a client's status is set to pending.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "client.pending",
+  "createdAt": "2024-05-23T08:30:21+0000",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+---
+
+### `client.verified`
+
+This event is triggered when a client is verified.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "client.verified",
+  "createdAt": "2024-05-23T08:30:21+0000",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+---
+
+### `client.frozen`
+
+This event is triggered when a client is frozen.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "client.frozen",
+  "createdAt": "2024-05-23T08:30:21+0000",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+---
+
+## Order Webhooks
+
+### `order.processing`
+
+This event is triggered when a new order is created.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.processing",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.completed`
+
+This event is triggered when an order is completed.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.completed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.expired`
+
+This event is triggered when an order is expired.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.expired",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.failed`
+
+This event is triggered when an order fails.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.failed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+## Input Operation Webhooks
+
+### `order.in.operation.new`
+
+This event is triggered when an input operation is created.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.in.operation.new",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.in.operation.processing`
+
+This event is triggered when an input operation starts.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.in.operation.processing",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.in.operation.failed`
+
+This event is triggered when an input operation fails.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.in.operation.failed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.in.operation.expired`
+
+This event is triggered when an input operation is expired.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.in.operation.expired",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.in.operation.completed`
+
+This event is triggered when an input operation is completed.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.in.operation.completed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+## Output Operation Webhooks
+
+### `order.out.operation.new`
+
+This event is triggered when an output operation is created.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.out.operation.new",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.out.operation.processing`
+
+This event is triggered when an output operation starts.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.out.operation.processing",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.out.operation.failed`
+
+This event is triggered when an output operation fails.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.out.operation.failed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.out.operation.expired`
+
+This event is triggered when an output operation is expired.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.out.operation.expired",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+### `order.out.operation.completed`
+
+This event is triggered when an output operation is completed.
+
+```json
+{
+  "id": "webhook-id",
+  "type": "order.out.operation.completed",
+  "createdAt": "2024-05-23T08:44:58+0000",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": null,
+  "externalClientId": "external-client-id-5"
+}
+```
+
+---
+
+## Payment Method Webhooks
+
+### `client.payment.method.binding`
+
+This event is triggered when a client starts binding a new payment method.
+
+```json
+{
+  "id": "webhook-id",
+  "clientId": "ed8ff528-3017-45bc-9d4d-f90e58f91bf9",
+  "bindId": "856c460d-7081-433b-904d-c46e313b1225",
+  "providerType": "ASSIST",
+  "createdAt": "2025-04-21T09:00:17+0000",
+  "type": "client.payment.method.binding"
+}
+```
+
+---
+
+### `client.payment.method.bound`
+
+This event is triggered when a client has successfully bound a new payment method.
+
+```json
+{
+  "id": "webhook-id",
+  "clientId": "ed8ff528-3017-45bc-9d4d-f90e58f91bf9",
+  "paymentToken": "7ee5900d-7a02-4bcf-a757-7a7b2fce462d",
+  "providerType": "ASSIST",
+  "createdAt": "2025-04-21T13:51:26+0000",
+  "type": "client.payment.method.bound"
+}
+```
+
+---
+
+### `client.payment.method.failed`
+
+This event is triggered when a client's payment method binding fails.
+
+```json
+{
+  "id": "webhook-id",
+  "clientId": "5646c1b7-d934-44ce-8490-938feb810910",
+  "bindId": "97d009fe-80e6-426d-8ea2-9784f676e08e",
+  "cardMask": "0380",
+  "brand": "MASTERCARD",
+  "providerType": "ALFA",
+  "createdAt": "2025-04-22T07:47:31+0000",
+  "type": "client.payment.method.failed"
+}
+```
+
+---
+
+# Signature
+
+The `x-payload-digest` header contains a signature that helps verify that the webhook was generated by WhiteBird.
+
+To verify the signature:
+
+1. Take the raw webhook request body as a string.
+2. Compute an HMAC using the SHA1 hash function.
+3. Use `webhookSigningHash` from the merchant account as the secret key.
+4. Compare the computed signature with the value from the `x-payload-digest` header.
+
+## Signature Verification Flow
+
+```text
+raw webhook body + webhookSigningHash
+        ↓
+HMAC-SHA1
+        ↓
+computed signature
+        ↓
+compare with x-payload-digest header
+```
+
+If both values match, the webhook can be considered valid.
+
+---
+
+# Best Practices
+
+- Accept webhook requests via `POST`.
+- Use HTTPS for webhook endpoints.
+- Verify the `x-payload-digest` signature.
+- Process events idempotently.
+- Return a `2xx` response after successful processing.
+- Store received webhook events for audit and debugging.
+- Use `id` as the webhook event identifier.
