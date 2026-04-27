@@ -4,8 +4,6 @@ WhiteBird webhooks notify partner systems about client, order, operation, and pa
 
 Use webhooks to keep your backend, UI, CRM, and reconciliation systems synchronized with WhiteBird state changes.
 
-
-
 ## Supported Events Overview
 
 | Category | Events |
@@ -18,22 +16,6 @@ Use webhooks to keep your backend, UI, CRM, and reconciliation systems synchroni
 
 > `order.error` is a legacy / deprecated event.
 
-
-
-## How it works
-
-WhiteBird sends webhook notifications as HTTP `POST` requests to the merchant webhook URL configured in the merchant account.
-
-General flow:
-
-1. A domain event occurs in WhiteBird.
-2. WhiteBird builds a JSON payload with event-specific fields.
-3. WhiteBird signs the raw payload body and sends it with the `x-payload-digest` header.
-4. Merchant endpoint verifies the signature and processes the event.
-5. Merchant returns `2xx` to confirm successful processing.
-
-
-
 ## Related webhook management endpoints
 
 | Method | Endpoint | Description |
@@ -42,27 +24,6 @@ General flow:
 | `POST` | `/api/v1/merchant/current/generate/webhookSigningHash` | Rotate signing secret |
 | `POST` | `/api/v1/merchant/current/webhook/server/paged` | Webhook delivery history |
 | `POST` | `/api/v1/merchant/current/webhook/server/{webhookId}/resend` | Resend webhook |
-
-## Signature verification
-
-WhiteBird signs each webhook request and sends signature in header `x-payload-digest`.
-
-Verification rules:
-- Algorithm: `HMAC-SHA1`
-- Key: merchant `webhookSigningHash`
-- Message: **raw HTTP request body bytes** (exactly as received)
-- Encoding: hex digest
-- Compare computed digest with `x-payload-digest` using constant-time compare
-
-If signature validation fails, return `401` or `403`.
-
-## Delivery and idempotency
-
-- Webhooks are delivered asynchronously and may be retried.
-- Treat webhook processing as idempotent.
-- Use webhook `id` as deduplication key.
-- Return `2xx` only after event is accepted for processing.
-- Return `5xx` for temporary processing failures to allow retry.
 
 ## Common Payload Fields
 
@@ -82,8 +43,6 @@ If signature validation fails, return `401` or `403`.
 | `brand` | string | Payment card brand |
 
 > Not every webhook contains all fields. Payload fields depend on the event category.
-
-
 
 # Event Payloads
 
@@ -106,8 +65,6 @@ If signature validation fails, return `401` or `403`.
   "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
 }
 ```
-
-
 
 ## Order Events
 
@@ -132,8 +89,6 @@ If signature validation fails, return `401` or `403`.
 }
 ```
 
-
-
 ## Input Operation Events
 
 | Event | Description |
@@ -157,8 +112,6 @@ If signature validation fails, return `401` or `403`.
 }
 ```
 
-
-
 ## Output Operation Events
 
 | Event | Description |
@@ -181,8 +134,6 @@ If signature validation fails, return `401` or `403`.
   "externalClientId": "external-client-id-5"
 }
 ```
-
-
 
 ## Payment Method Events
 
