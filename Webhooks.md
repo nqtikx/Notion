@@ -4,42 +4,6 @@ WhiteBird webhooks allow partner systems to receive notifications about client, 
 
 The partner should expose a backend endpoint that accepts `POST` requests with a JSON payload.
 
----
-
-## 1. How it works
-
-WhiteBird sends webhook notifications as HTTP `POST` requests to the merchant webhook URL configured in the merchant account.
-
-General flow:
-
-1. A domain event occurs in WhiteBird: client status change, order status change, operation status change, or payment method event.
-2. WhiteBird builds a JSON payload with event-specific fields.
-3. WhiteBird signs the raw payload body and sends it with the `x-payload-digest` header.
-4. Merchant endpoint verifies the signature and processes the event.
-5. Merchant returns `2xx` to confirm successful processing.
-
-Related webhook management endpoints:
-
-- `PUT /api/v1/merchant/current/webhookURL` — set or update webhook URL
-- `POST /api/v1/merchant/current/generate/webhookSigningHash` — rotate signing secret
-- `POST /api/v1/merchant/current/webhook/server/paged` — webhook delivery history
-- `POST /api/v1/merchant/current/webhook/server/{webhookId}/resend` — resend webhook
-
----
-
-## 2. Common use cases
-
-Typical partner use cases:
-
-- Synchronize client lifecycle in partner CRM
-- Track order lifecycle and update user-facing UI
-- Track operation-level progress for deposits, withdrawals, and payouts
-- Process payment method lifecycle events
-- Trigger internal notifications, compliance checks, and support actions
-- Build reconciliation pipelines between WhiteBird and partner systems
-
----
-
 ## 3. Supported events
 
 ### Client events
@@ -79,7 +43,7 @@ Typical partner use cases:
 - `client.payment.method.bound`
 - `client.payment.method.failed`
 
----
+
 
 # Client Webhooks
 
@@ -96,7 +60,7 @@ This event is triggered when a new client is created.
 }
 ```
 
----
+
 
 ## `client.pending`
 
@@ -111,7 +75,7 @@ This event is triggered when a client's status is set to pending.
 }
 ```
 
----
+
 
 ## `client.verified`
 
@@ -126,7 +90,7 @@ This event is triggered when a client is verified.
 }
 ```
 
----
+
 
 ## `client.frozen`
 
@@ -141,7 +105,7 @@ This event is triggered when a client is frozen.
 }
 ```
 
----
+
 
 # Order Webhooks
 
@@ -160,7 +124,7 @@ This event is triggered when a new order is created or starts processing.
 }
 ```
 
----
+
 
 ## `order.completed`
 
@@ -177,7 +141,7 @@ This event is triggered when an order is completed.
 }
 ```
 
----
+
 
 ## `order.expired`
 
@@ -194,7 +158,7 @@ This event is triggered when an order is expired.
 }
 ```
 
----
+
 
 ## `order.failed`
 
@@ -211,7 +175,7 @@ This event is triggered when an order fails.
 }
 ```
 
----
+
 
 ## `order.error`
 
@@ -228,7 +192,7 @@ This event is legacy / deprecated.
 }
 ```
 
----
+
 
 # Input Operation Webhooks
 
@@ -247,7 +211,7 @@ This event is triggered when an input operation is selected.
 }
 ```
 
----
+
 
 ## `order.operation.in.processing`
 
@@ -264,7 +228,7 @@ This event is triggered when an input operation starts processing.
 }
 ```
 
----
+
 
 ## `order.operation.in.completed`
 
@@ -281,7 +245,7 @@ This event is triggered when an input operation is completed.
 }
 ```
 
----
+
 
 ## `order.operation.in.failed`
 
@@ -298,7 +262,7 @@ This event is triggered when an input operation fails.
 }
 ```
 
----
+
 
 ## `order.operation.in.expired`
 
@@ -315,7 +279,7 @@ This event is triggered when an input operation is expired.
 }
 ```
 
----
+
 
 # Output Operation Webhooks
 
@@ -334,7 +298,7 @@ This event is triggered when an output operation is selected.
 }
 ```
 
----
+
 
 ## `order.operation.out.processing`
 
@@ -351,7 +315,7 @@ This event is triggered when an output operation starts processing.
 }
 ```
 
----
+
 
 ## `order.operation.out.completed`
 
@@ -368,7 +332,7 @@ This event is triggered when an output operation is completed.
 }
 ```
 
----
+
 
 ## `order.operation.out.failed`
 
@@ -385,7 +349,7 @@ This event is triggered when an output operation fails.
 }
 ```
 
----
+
 
 ## `order.operation.out.expired`
 
@@ -402,7 +366,7 @@ This event is triggered when an output operation is expired.
 }
 ```
 
----
+
 
 # Payment Method Webhooks
 
@@ -421,7 +385,7 @@ This event is triggered when a client starts binding a new payment method.
 }
 ```
 
----
+
 
 ## `client.payment.method.bound`
 
@@ -438,7 +402,7 @@ This event is triggered when a client has successfully bound a new payment metho
 }
 ```
 
----
+
 
 ## `client.payment.method.failed`
 
@@ -457,4 +421,4 @@ This event is triggered when a client's payment method binding fails.
 }
 ```
 
----
+
