@@ -130,8 +130,8 @@ It implies a seamless transition from the client’s app to the WhiteBird platfo
 
 The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
 
-- User registration request: [register](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status)
-- User token request: [generate](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status)
+- User registration request: [register](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#register-post-request)
+- User token request: [generate](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#generate-tokens-request)
 
 ## Integration scenarios
 
