@@ -89,4 +89,4 @@ Common fields are event-dependent.
 
 ## Full payload catalog
 
-See: [Webhooks — Event Payload Examples](Webhooks - Event Payload Example.md).
+See: [Webhooks — Event Payload Examples](./webhooks-event-payload-example.md).
