@@ -43,20 +43,26 @@ General flow:
 | `POST` | `/api/v1/merchant/current/webhook/server/paged` | Webhook delivery history |
 | `POST` | `/api/v1/merchant/current/webhook/server/{webhookId}/resend` | Resend webhook |
 
+## Signature verification
 
+WhiteBird signs each webhook request and sends signature in header `x-payload-digest`.
 
-## Common use cases
+Verification rules:
+- Algorithm: `HMAC-SHA1`
+- Key: merchant `webhookSigningHash`
+- Message: **raw HTTP request body bytes** (exactly as received)
+- Encoding: hex digest
+- Compare computed digest with `x-payload-digest` using constant-time compare
 
-Typical partner use cases:
+If signature validation fails, return `401` or `403`.
 
-- Synchronize client lifecycle in partner CRM
-- Track order lifecycle and update user-facing UI
-- Track operation-level progress for deposits, withdrawals, and payouts
-- Process payment method lifecycle events
-- Trigger internal notifications, compliance checks, and support actions
-- Build reconciliation pipelines between WhiteBird and partner systems
+## Delivery and idempotency
 
-
+- Webhooks are delivered asynchronously and may be retried.
+- Treat webhook processing as idempotent.
+- Use webhook `id` as deduplication key.
+- Return `2xx` only after event is accepted for processing.
+- Return `5xx` for temporary processing failures to allow retry.
 
 ## Common Payload Fields
 
