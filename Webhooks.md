@@ -16,15 +16,6 @@ Use webhooks to keep your backend, UI, CRM, and reconciliation systems synchroni
 
 > `order.error` is a legacy / deprecated event.
 
-## Related webhook management endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `PUT` | `/api/v1/merchant/current/webhookURL` | Set or update webhook URL |
-| `POST` | `/api/v1/merchant/current/generate/webhookSigningHash` | Rotate signing secret |
-| `POST` | `/api/v1/merchant/current/webhook/server/paged` | Webhook delivery history |
-| `POST` | `/api/v1/merchant/current/webhook/server/{webhookId}/resend` | Resend webhook |
-
 ## Common Payload Fields
 
 | Field | Type | Description |
