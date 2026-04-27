@@ -130,8 +130,8 @@ It implies a seamless transition from the client’s app to the WhiteBird platfo
 
 The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
 
-- User registration request: [register](onboardingAPI.md#register-post-request)
-- User token request: [generate](onboardingAPI.md#generate-tokens-request)
+- User registration request: register
+- User token request: generate
 
 ## Integration scenarios
 
