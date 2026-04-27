@@ -1,68 +1,92 @@
 # Webhooks
 
-WhiteBird sends webhook notifications to merchant backend endpoints via HTTP `POST` with JSON payload.
+WhiteBird sends webhook notifications to merchant backend endpoints via HTTP `POST` with a JSON payload.
 
 ## What is sent
 
-Supported event groups:
-- Client events
-- Order events
-- Order operation events
-- Payment method events
+### Supported event groups
 
-Supported event types:
-- `client.created`, `client.pending`, `client.verified`, `client.frozen`
-- `order.processing`, `order.completed`, `order.expired`, `order.failed`, `order.error` (legacy)
-- `order.operation.in.selected`, `order.operation.in.processing`, `order.operation.in.completed`, `order.operation.in.failed`, `order.operation.in.expired`
-- `order.operation.out.selected`, `order.operation.out.processing`, `order.operation.out.completed`, `order.operation.out.failed`, `order.operation.out.expired`
-- `client.payment.method.binding`, `client.payment.method.bound`, `client.payment.method.failed`
+| Group |
+|---|
+| Client events |
+| Order events |
+| Order operation events |
+| Payment method events |
 
-Additional webhook types used in code:
-- `SUMSUB_STATUS_CHANGED`
-- `CLIENT_EMAIL_CHANGED`
-- `CRM_EVENT_PROCESSED`
+### Supported event types
+
+| Group | Event types |
+|---|---|
+| Client events | `client.created`, `client.pending`, `client.verified`, `client.frozen` |
+| Order events | `order.processing`, `order.completed`, `order.expired`, `order.failed`, `order.error` (legacy) |
+| Input operation events | `order.operation.in.selected`, `order.operation.in.processing`, `order.operation.in.completed`, `order.operation.in.failed`, `order.operation.in.expired` |
+| Output operation events | `order.operation.out.selected`, `order.operation.out.processing`, `order.operation.out.completed`, `order.operation.out.failed`, `order.operation.out.expired` |
+| Payment method events | `client.payment.method.binding`, `client.payment.method.bound`, `client.payment.method.failed` |
+
+### Additional webhook types used in code
+
+| Event type |
+|---|
+| `SUMSUB_STATUS_CHANGED` |
+| `CLIENT_EMAIL_CHANGED` |
+| `CRM_EVENT_PROCESSED` |
 
 ## Signature verification
 
-Each webhook request contains header:
-- `x-payload-digest`
+Each webhook request contains the following header:
+
+| Header |
+|---|
+| `x-payload-digest` |
 
 Verification rules:
-- Algorithm: `HMAC-SHA1`
-- Key: merchant `webhookSigningHash`
-- Message: raw request body bytes (exactly as received)
-- Output format: hex digest
+
+| Parameter | Value |
+|---|---|
+| Algorithm | `HMAC-SHA1` |
+| Key | Merchant `webhookSigningHash` |
+| Message | Raw request body bytes, exactly as received |
+| Output format | Hex digest |
 
 ## Delivery behavior
 
-- Webhooks are sent asynchronously.
-- Sender retries up to 3 times on transport errors (`RestClientException`) with 1s backoff.
-- Delivery result is stored (response code/message, last send time).
-- Receiver should implement idempotent processing (deduplicate by webhook `id`).
+| Behavior | Description |
+|---|---|
+| Sending mode | Webhooks are sent asynchronously |
+| Retry policy | Sender retries up to 3 times on transport errors (`RestClientException`) |
+| Backoff | 1s |
+| Delivery storage | Delivery result is stored: response code/message, last send time |
+| Receiver requirement | Receiver should implement idempotent processing |
+| Deduplication key | Webhook `id` |
 
 ## Merchant webhook management endpoints
 
-- `PUT /api/v1/merchant/current/webhookURL` — set/update webhook URL
-- `POST /api/v1/merchant/current/generate/webhookSigningHash` — regenerate signing secret
-- `POST /api/v1/merchant/current/webhook/server/paged` — delivery history
-- `POST /api/v1/merchant/current/webhook/server/{webhookId}/resend` — resend webhook
+| Method | Endpoint | Description |
+|---|---|---|
+| `PUT` | `/api/v1/merchant/current/webhookURL` | Set/update webhook URL |
+| `POST` | `/api/v1/merchant/current/generate/webhookSigningHash` | Regenerate signing secret |
+| `POST` | `/api/v1/merchant/current/webhook/server/paged` | Delivery history |
+| `POST` | `/api/v1/merchant/current/webhook/server/{webhookId}/resend` | Resend webhook |
 
 ## Payload structure
 
-Common fields (event-dependent):
-- `id` (`string | null`)
-- `type` (`string`)
-- `createdAt` (`string`)
-- `clientId` (`string`)
-- `orderId` (`string`)
-- `sessionId` (`string | null`)
-- `externalClientId` (`string | null`)
-- `bindId` (`string`)
-- `paymentToken` (`string`)
-- `providerType` (`string`)
-- `cardMask` (`string`)
-- `brand` (`string`)
+Common fields are event-dependent.
+
+| Field | Type |
+|---|---|
+| `id` | `string \| null` |
+| `type` | `string` |
+| `createdAt` | `string` |
+| `clientId` | `string` |
+| `orderId` | `string` |
+| `sessionId` | `string \| null` |
+| `externalClientId` | `string \| null` |
+| `bindId` | `string` |
+| `paymentToken` | `string` |
+| `providerType` | `string` |
+| `cardMask` | `string` |
+| `brand` | `string` |
 
 ## Full payload catalog
 
-See: **Webhooks — Event Payload Examples** (separate page).
+See: [Webhooks — Event Payload Examples](Webhooks - Event Payload Example.md).
