@@ -4,7 +4,7 @@ WhiteBird webhooks allow partner systems to receive notifications about client, 
 
 The partner should expose a backend endpoint that accepts `POST` requests with a JSON payload.
 
-## 3. Supported events
+## Supported events
 
 ### Client events
 
