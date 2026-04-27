@@ -154,7 +154,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
   merchantId: "xxxx",
-  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
+  merchantPass: "{{merchantPass}}", // parameter for SDK, used as Authorization: Basic {{merchantPass}}. Needed to generate accessToken and refreshToken
 
   // LoginMode
   onUserData: ({ email, accessToken, refreshToken }) => {
@@ -188,7 +188,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.LoginMode,
   merchantId: "xxxx",
-  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
+  merchantPass: "{{merchantPass}}", // parameter for SDK, used as Authorization: Basic {{merchantPass}}. Needed to generate accessToken and refreshToken
 
   // partner-generated client tokens
   accessToken: "****",
@@ -231,7 +231,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.TokensMode,
   merchantId: "xxxx",
-  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
+  merchantPass: "{{merchantPass}}", // parameter for SDK, used as Authorization: Basic {{merchantPass}}. Needed to generate accessToken and refreshToken
 
   // TokensMode
   accessToken: "****",
@@ -256,7 +256,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
   merchantId: "xxxx",
-  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
+  merchantPass: "{{merchantPass}}", // parameter for SDK, used as Authorization: Basic {{merchantPass}}. Needed to generate accessToken and refreshToken
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
@@ -290,7 +290,7 @@ wbExchangeSdk.setup({
   el: document.getElementById("wbExchangeSdkWrapper"),
   mode: wbExchangeSdk.mode.AuthMode,
   merchantId: "xxxx",
-  merchantPass: "{{merchantPass}}", // parameter used for SDK session/auth context
+  merchantPass: "{{merchantPass}}", // parameter for SDK, used as Authorization: Basic {{merchantPass}}. Needed to generate accessToken and refreshToken
 
   // AuthMode
   onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
