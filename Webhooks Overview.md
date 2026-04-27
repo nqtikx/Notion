@@ -4,15 +4,6 @@ WhiteBird sends webhook notifications to merchant backend endpoints via HTTP `PO
 
 ## What is sent
 
-### Supported event groups
-
-| Group |
-|---|
-| Client events |
-| Order events |
-| Order operation events |
-| Payment method events |
-
 ### Supported event types
 
 | Group | Event types |
