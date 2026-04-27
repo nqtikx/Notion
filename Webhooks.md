@@ -1,85 +1,96 @@
 # Webhooks
 
-WhiteBird webhooks allow partner systems to receive notifications about client, order, operation, and payment method events.
+WhiteBird webhooks notify partner systems about client, order, operation, and payment method events.
 
-The partner should expose a backend endpoint that accepts `POST` requests with a JSON payload.
-
-## Supported events
-
-### Client events
-
-- `client.created`
-- `client.pending`
-- `client.verified`
-- `client.frozen`
-
-### Order events
-
-- `order.processing`
-- `order.completed`
-- `order.expired`
-- `order.failed`
-- `order.error` — legacy / deprecated
-
-### Input operation events
-
-- `order.operation.in.selected`
-- `order.operation.in.processing`
-- `order.operation.in.completed`
-- `order.operation.in.failed`
-- `order.operation.in.expired`
-
-### Output operation events
-
-- `order.operation.out.selected`
-- `order.operation.out.processing`
-- `order.operation.out.completed`
-- `order.operation.out.failed`
-- `order.operation.out.expired`
-
-### Payment method events
-
-- `client.payment.method.binding`
-- `client.payment.method.bound`
-- `client.payment.method.failed`
+Use webhooks to keep your backend, UI, CRM, and reconciliation systems synchronized with WhiteBird state changes.
 
 
 
-# Client Webhooks
+## Supported Events Overview
 
-## `client.created`
+| Category | Events |
+|---|---|
+| Client | `client.created`, `client.pending`, `client.verified`, `client.frozen` |
+| Order | `order.processing`, `order.completed`, `order.expired`, `order.failed`, `order.error` |
+| Input Operation | `order.operation.in.selected`, `order.operation.in.processing`, `order.operation.in.completed`, `order.operation.in.failed`, `order.operation.in.expired` |
+| Output Operation | `order.operation.out.selected`, `order.operation.out.processing`, `order.operation.out.completed`, `order.operation.out.failed`, `order.operation.out.expired` |
+| Payment Method | `client.payment.method.binding`, `client.payment.method.bound`, `client.payment.method.failed` |
 
-This event is triggered when a new client is created.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "client.created",
-  "createdAt": "2024-05-23T08:30:21+0000",
-  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
-}
-```
+> `order.error` is a legacy / deprecated event.
 
 
 
-## `client.pending`
+## How it works
 
-This event is triggered when a client's status is set to pending.
+WhiteBird sends webhook notifications as HTTP `POST` requests to the merchant webhook URL configured in the merchant account.
 
-```json
-{
-  "id": "webhook-id",
-  "type": "client.pending",
-  "createdAt": "2024-05-23T08:30:21+0000",
-  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
-}
-```
+General flow:
 
+1. A domain event occurs in WhiteBird.
+2. WhiteBird builds a JSON payload with event-specific fields.
+3. WhiteBird signs the raw payload body and sends it with the `x-payload-digest` header.
+4. Merchant endpoint verifies the signature and processes the event.
+5. Merchant returns `2xx` to confirm successful processing.
 
 
-## `client.verified`
 
-This event is triggered when a client is verified.
+## Related webhook management endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `PUT` | `/api/v1/merchant/current/webhookURL` | Set or update webhook URL |
+| `POST` | `/api/v1/merchant/current/generate/webhookSigningHash` | Rotate signing secret |
+| `POST` | `/api/v1/merchant/current/webhook/server/paged` | Webhook delivery history |
+| `POST` | `/api/v1/merchant/current/webhook/server/{webhookId}/resend` | Resend webhook |
+
+
+
+## Common use cases
+
+Typical partner use cases:
+
+- Synchronize client lifecycle in partner CRM
+- Track order lifecycle and update user-facing UI
+- Track operation-level progress for deposits, withdrawals, and payouts
+- Process payment method lifecycle events
+- Trigger internal notifications, compliance checks, and support actions
+- Build reconciliation pipelines between WhiteBird and partner systems
+
+
+
+## Common Payload Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string | Unique webhook event ID |
+| `type` | string | Webhook event type |
+| `createdAt` | string | Event creation timestamp |
+| `clientId` | string | WhiteBird client ID |
+| `orderId` | string | WhiteBird order ID |
+| `sessionId` | string/null | SDK session ID |
+| `externalClientId` | string/null | Partner client identifier |
+| `bindId` | string | Payment method binding ID |
+| `paymentToken` | string | Tokenized payment method identifier |
+| `providerType` | string | Payment provider type |
+| `cardMask` | string | Masked card digits |
+| `brand` | string | Payment card brand |
+
+> Not every webhook contains all fields. Payload fields depend on the event category.
+
+
+
+# Event Payloads
+
+## Client Events
+
+| Event | Description |
+|---|---|
+| `client.created` | Triggered when a new client is created |
+| `client.pending` | Triggered when a client status becomes pending |
+| `client.verified` | Triggered when a client is verified |
+| `client.frozen` | Triggered when a client is frozen |
+
+### Example payload
 
 ```json
 {
@@ -92,43 +103,17 @@ This event is triggered when a client is verified.
 
 
 
-## `client.frozen`
+## Order Events
 
-This event is triggered when a client is frozen.
+| Event | Description |
+|---|---|
+| `order.processing` | Triggered when an order is created or starts processing |
+| `order.completed` | Triggered when an order is completed |
+| `order.expired` | Triggered when an order expires |
+| `order.failed` | Triggered when an order fails |
+| `order.error` | Legacy / deprecated event |
 
-```json
-{
-  "id": "webhook-id",
-  "type": "client.frozen",
-  "createdAt": "2024-05-23T08:30:21+0000",
-  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
-}
-```
-
-
-
-# Order Webhooks
-
-## `order.processing`
-
-This event is triggered when a new order is created or starts processing.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.processing",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.completed`
-
-This event is triggered when an order is completed.
+### Example payload
 
 ```json
 {
@@ -143,79 +128,17 @@ This event is triggered when an order is completed.
 
 
 
-## `order.expired`
+## Input Operation Events
 
-This event is triggered when an order is expired.
+| Event | Description |
+|---|---|
+| `order.operation.in.selected` | Triggered when an input operation is selected |
+| `order.operation.in.processing` | Triggered when an input operation starts processing |
+| `order.operation.in.completed` | Triggered when an input operation is completed |
+| `order.operation.in.failed` | Triggered when an input operation fails |
+| `order.operation.in.expired` | Triggered when an input operation expires |
 
-```json
-{
-  "id": "webhook-id",
-  "type": "order.expired",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.failed`
-
-This event is triggered when an order fails.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.failed",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.error`
-
-This event is legacy / deprecated.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.error",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-# Input Operation Webhooks
-
-## `order.operation.in.selected`
-
-This event is triggered when an input operation is selected.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.in.selected",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.in.processing`
-
-This event is triggered when an input operation starts processing.
+### Example payload
 
 ```json
 {
@@ -230,96 +153,17 @@ This event is triggered when an input operation starts processing.
 
 
 
-## `order.operation.in.completed`
+## Output Operation Events
 
-This event is triggered when an input operation is completed.
+| Event | Description |
+|---|---|
+| `order.operation.out.selected` | Triggered when an output operation is selected |
+| `order.operation.out.processing` | Triggered when an output operation starts processing |
+| `order.operation.out.completed` | Triggered when an output operation is completed |
+| `order.operation.out.failed` | Triggered when an output operation fails |
+| `order.operation.out.expired` | Triggered when an output operation expires |
 
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.in.completed",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.in.failed`
-
-This event is triggered when an input operation fails.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.in.failed",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.in.expired`
-
-This event is triggered when an input operation is expired.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.in.expired",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-# Output Operation Webhooks
-
-## `order.operation.out.selected`
-
-This event is triggered when an output operation is selected.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.out.selected",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.out.processing`
-
-This event is triggered when an output operation starts processing.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.out.processing",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.out.completed`
-
-This event is triggered when an output operation is completed.
+### Example payload
 
 ```json
 {
@@ -334,45 +178,15 @@ This event is triggered when an output operation is completed.
 
 
 
-## `order.operation.out.failed`
+## Payment Method Events
 
-This event is triggered when an output operation fails.
+| Event | Description |
+|---|---|
+| `client.payment.method.binding` | Triggered when a client starts binding a new payment method |
+| `client.payment.method.bound` | Triggered when a client successfully binds a new payment method |
+| `client.payment.method.failed` | Triggered when payment method binding fails |
 
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.out.failed",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-## `order.operation.out.expired`
-
-This event is triggered when an output operation is expired.
-
-```json
-{
-  "id": "webhook-id",
-  "type": "order.operation.out.expired",
-  "createdAt": "2024-05-23T08:44:58+0000",
-  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
-  "externalClientId": "external-client-id-5"
-}
-```
-
-
-
-# Payment Method Webhooks
-
-## `client.payment.method.binding`
-
-This event is triggered when a client starts binding a new payment method.
+### Example: `client.payment.method.binding`
 
 ```json
 {
@@ -385,11 +199,7 @@ This event is triggered when a client starts binding a new payment method.
 }
 ```
 
-
-
-## `client.payment.method.bound`
-
-This event is triggered when a client has successfully bound a new payment method.
+### Example: `client.payment.method.bound`
 
 ```json
 {
@@ -402,11 +212,7 @@ This event is triggered when a client has successfully bound a new payment metho
 }
 ```
 
-
-
-## `client.payment.method.failed`
-
-This event is triggered when a client's payment method binding fails.
+### Example: `client.payment.method.failed`
 
 ```json
 {
@@ -420,5 +226,3 @@ This event is triggered when a client's payment method binding fails.
   "type": "client.payment.method.failed"
 }
 ```
-
-
