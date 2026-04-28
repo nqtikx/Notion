@@ -14,7 +14,7 @@ All requests are authorized with the `x-api-key` header.
 |---|---|---|
 | Full KYC registration | `POST /api/v2/kyc/merchant/client/register` | Partner sends complete user KYC/PID data to WhiteBird |
 | Client status check | `POST /api/v2/kyc/merchant/client/status` | Partner checks whether the client is allowed to transact |
-| Crypto test for BY residents | `GET /api/v2/kyc/merchant/client/crypto-test` -> `POST /api/v2/kyc/merchant/client/crypto-test` | Required for Belarusian residents/documents |
+| Crypto test for BY residents | `GET /api/v2/kyc/merchant/client/crypto-test` -> `POST /api/v2/kyc/merchant/client/crypto-test` | Endpoint returns test questions for residents that require crypto test |
 | SDK light registration | `POST /api/v2/auth/merchant/client/register` | Partner creates a client without full KYC data |
 | SDK token generation | `POST /api/v2/auth/merchant/client/token/generate` | Partner receives SDK access tokens for a registered client |
 
@@ -51,9 +51,9 @@ If the identity document does not contain registration address information, the 
 | `gender` | `Gender` | Yes | User gender. See [Data dictionaries](#data-dictionaries) |
 | `firstNameRu` | `string` | Yes | First name in Russian/Cyrillic form |
 | `lastNameRu` | `string` | Yes | Last name in Russian/Cyrillic form |
-| `patronymicRu` | `string` | Yes | Patronymic/middle name in Russian/Cyrillic form. If absent in PID, send a placeholder agreed with WhiteBird |
-| `firstName` | `string` | Yes | First name in Latin form. If absent in PID, send a placeholder agreed with WhiteBird |
-| `lastName` | `string` | Yes | Last name in Latin form. If absent in PID, send a placeholder agreed with WhiteBird |
+| `patronymicRu` | `string` | Yes | Patronymic/middle name in Russian/Cyrillic form. Must not be empty |
+| `firstName` | `string` | Yes | First name in Latin form. Must not be empty |
+| `lastName` | `string` | Yes | Last name in Latin form. Must not be empty |
 | `placeOfBirth` | `string` | Yes | Place of birth |
 | `birthDate` | `string` | No | Date of birth in `YYYY-MM-DD` format |
 | `nationality` | `CountryCode` | Yes | Nationality/citizenship code |
@@ -82,7 +82,7 @@ Registration address format differs by country. Fill in values that correspond t
 | `registrationCity` | `string` | Yes | City/locality/settlement |
 | `registrationStreet` | `string` | Yes | Street |
 | `registrationHouseAndFlat` | `string` | Yes | House, building and apartment |
-| `postCode` | `string` | Yes | Postal code. If not applicable, send a placeholder agreed with WhiteBird |
+| `postCode` | `string` | Yes | Postal code. Must not be empty |
 
 #### Consents and flags
 
@@ -91,8 +91,8 @@ Registration address format differs by country. Fill in values that correspond t
 | `notUSTaxPayer` | `boolean` | No | Confirms that user is not a U.S. taxpayer |
 | `agreedWithOffer` | `boolean` | No | Confirms user agreement with WhiteBird offer |
 | `exchangeInPersonalInterests` | `boolean` | No | Confirms exchange is performed in user personal interests |
-| `files` | `string[]` | No | Optional file references, if supported by integration |
-| `isPotentialDrop` | `boolean` | No | Optional internal risk flag, use only if agreed with WhiteBird |
+| `files` | `string[]` | No | Optional file references saved with KYC client data |
+| `isPotentialDrop` | `boolean` | No | Optional risk flag passed to CRM processing |
 
 ### Request example (Belarus user)
 
@@ -169,7 +169,7 @@ Registration address format differs by country. Fill in values that correspond t
 | Field | Type | Description |
 |---|---|---|
 | `id` | `string` | Registered WhiteBird client id |
-| `status` | `ClientStatus` | Current client status |
+| `status` | `KycClientStatus` | Current KYC client status |
 
 ```json
 {
@@ -189,7 +189,7 @@ Registration address format differs by country. Fill in values that correspond t
 
 ### `POST /api/v2/kyc/merchant/client/status`
 
-Returns current client status. The only status allowed for transactions is `VERIFIED`.
+Returns current client status.
 
 ### Request fields
 
@@ -219,7 +219,7 @@ Returns current client status. The only status allowed for transactions is `VERI
 
 ## 3. Crypto test
 
-Belarusian resident users must pass the crypto test. This is a regulator requirement. When SDK is used, the test is built into the SDK flow.
+For non-resident clients this flow returns `cryptoTestRequired=false` and does not update test answers.
 
 ### `GET /api/v2/kyc/merchant/client/crypto-test?clientId={clientId}`
 
@@ -244,7 +244,7 @@ Returns whether the crypto test is required and, if required, returns the questi
   "cryptoTestRequired": true,
   "questions": [
     {
-      "id": 1,
+      "id": "1",
       "title": "Question text",
       "answers": [
         {
@@ -433,41 +433,33 @@ Response:
 ## Data dictionaries
 
 ```typescript
-enum Gender {
-  Men = "муж",      // male
-  Woman = "жен"    // female
-}
+type Gender = string // Examples used in existing integrations: "муж", "жен"
 
 type CountryCode = string // Numeric ISO 3166-1 country code, e.g. "112" for Belarus, "643" for Russia
 
-enum DocType {
-  PassportBY = "3",                             // Belarusian passport
-  ResidencePermitBY = "6",                      // Belarusian residence permit
-  RefugeeCertificateBY = "7",                   // Belarusian refugee certificate
-  ForeignPassport = "9",                        // Foreign passport
-  IDCardBY = "15",                              // Belarusian ID card
-  ForeignBiometricResidencePermitBY = "16",     // Biometric residence permit for foreign citizens in Belarus
-  RefugeeBiometricResidencePermitBY = "17",     // Biometric residence permit for stateless persons in Belarus
-  Other = "99"                                  // Other
-}
+type DocType = string // Examples used in existing integrations: "3" (BY passport), "9" (foreign passport)
 
-enum ClientStatus {
-  CREATED = "CREATED",
+enum KycClientStatus {
+  NOT_VERIFIED = "NOT_VERIFIED",
   PENDING = "PENDING",
   VERIFIED = "VERIFIED",
   FROZEN = "FROZEN",
-  ARREST = "ARREST",
+  ARREST = "ARREST"
+}
+
+enum AuthUserStatus {
+  NEW = "NEW",
   EMAIL_VERIFIED = "EMAIL_VERIFIED"
 }
 
 interface TestQuestion {
-  id: string | number;
+  id: string;
   title: string;
   answers: TestAnswer[];
 }
 
 interface TestAnswer {
-  id: number;
+  id: number; // serialized from Java Long
   title: string;
   correct: boolean;
 }
@@ -479,29 +471,12 @@ interface TestAnswer {
 
 If a field marked as required is missing or empty, the request fails Java bean validation.
 
-Example:
-
-```json
-{
-  "error": "Validation failed",
-  "details": "email must not be empty"
-}
-```
-
 ### Missing Belarus personal number
 
 For Belarus registration country (`112`), `personalNumber` is required.
 
-```json
-{
-  "error": "Personal number must not be empty for registration country BLR"
-}
-```
+Error message: `Personal number must not be empty for registration country BLR`
 
 ### Wrong crypto test answers
 
-```json
-{
-  "error": "Wrong answers to crypto test"
-}
-```
+Error message: `Wrong answers to crypto test`
