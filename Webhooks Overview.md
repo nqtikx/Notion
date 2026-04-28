@@ -49,7 +49,7 @@ For full payload examples, see:
 | `client.payment.method.failed` | Payment method binding failed | Notify failed binding with diagnostics | `id`, `clientId`, `bindId`, `cardMask`, `brand`, `providerType`, `createdAt` |
 | `SUMSUB_STATUS_CHANGED` | Sumsub webhook processed | Notify KYC/AML status update | `id` *(can be `null`)*, `clientId`, `processName`, `levelType`, `reviewResult`, `actionId`, `createdAt` |
 | `CLIENT_EMAIL_CHANGED` | Client email changed | Sync updated client email | `id` *(can be `null`)*, `clientId`, `email`, `createdAt` |
-| `CRM_EVENT_PROCESSED` | CRM event processed | Notify CRM pipeline completion | `id` *(can be `null`)*, `clientId`, `topic`, `createdAt` |
+| `CRM_EVENT_PROCESSED` | Type exists in codebase; no active sender path in current flow | Reserved/technical event type | `id` *(can be `null`)*, `clientId`, `topic`, `createdAt` |
 
 ---
 
@@ -58,9 +58,12 @@ For full payload examples, see:
 Every webhook request includes header:
 - `x-payload-digest`
 
+Payload date format used by sender serialization:
+- `createdAt`: `yyyy-MM-dd'T'HH:mm:ss` (no timezone suffix)
+
 <img width="512" height="722" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
 
-## 3) Delivery behavior (what merchant should expect)
+## 3) Delivery behavior
 
 Webhook sending is asynchronous. Delivery is "at least once", so duplicates are possible.
 
@@ -69,7 +72,7 @@ Webhook sending is asynchronous. Delivery is "at least once", so duplicates are 
 | Behavior | Description |
 |---|---|
 | Sending mode | Asynchronous |
-| Retry policy | (Up to 3 attempts on RestClientException (including RestClientResponseException) |
+| Retry policy | Up to 3 attempts on `RestClientException` (including `RestClientResponseException`) |
 | Backoff | 1 second between attempts |
 | Timeouts | 15s connect / 15s read |
 | Delivery log | Response code, response message, and last send timestamp are stored |
