@@ -57,7 +57,7 @@ For full payload examples, see:
 Every webhook request includes header:
 - `x-payload-digest`
 
-<img width="512" height="722" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
+<img width="575" height="680" alt="image" src="https://github.com/user-attachments/assets/9924b0f0-f20f-4c1e-907b-907d42b47e09" />
 
 ### What exactly is signed
 WhiteBird signs the **raw HTTP request body bytes** (the exact JSON payload as received), using:
