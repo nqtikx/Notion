@@ -2,348 +2,235 @@
 
 ## Purpose
 
-This guide documents registration and related KYC endpoints used by merchant integrations.
+For integration with partners who have a large user base with a full set of personal identity document (PID) information.
 
-All merchant endpoints below are backend-to-backend and require `x-api-key`.
+##### Description
+To carry out transactions on our platform, we need to collect PID information from users. If a partner already has the required user data, we can delegate the data collection task from users to the partner. This interaction will be formalized by an agreement, making the partner our “identification agent.”
 
-## Table of Contents
+In this case, the user registration request in our system serves as the protocol for receiving user data from the "identification agent."
 
-- [1. Registration endpoint](#1-registration-endpoint)
-- [2. Field usage by flow](#2-field-usage-by-flow)
-- [3. Client status endpoint](#3-client-status-endpoint)
-- [4. Crypto test endpoints](#4-crypto-test-endpoints)
-- [5. Additional useful endpoints](#5-additional-useful-endpoints)
-- [6. User-side validation endpoints](#6-user-side-validation-endpoints)
-- [7. Minimal registration fields](#7-minimal-registration-fields)
-- [8. Data types](#8-data-types)
+Request authorization is performed through the **x-api-key** header. All requests are Backend-to-Backend.
 
-## 1. Registration endpoint
+### Sections:
+- **[Registration](#register-post-request)**
+- **[Client status](#client-status)**
+- **[Crypto test (for BY users)](#crypto-test-requests)**
+- **[Token generation (for SDK)](#generate-tokens-request)**
 
-### POST `/api/v2/kyc/merchant/client/register`
+### Register POST request
 
-Creates or registers a client in registration/KYC flow.
+Protocol for receiving a complete set of user data and creating an account.
 
-### Tech-required fields (DTO `@NotEmpty`)
+If the identity document does not contain registration address information, this data should be obtained from other documents confirming the user’s residence (utility bills, bank statements, etc.). It is also acceptable to obtain this information verbally from the user.
 
-- `email`
-- `phone`
-- `firstNameRu`
-- `lastNameRu`
-- `patronymicRu`
-- `firstName`
-- `lastName`
-- `residence`
-- `placeOfBirth`
-- `registrationCountry`
-- `registrationRegion`
-- `residenceDistrict`
-- `registrationCity`
-- `registrationStreet`
-- `registrationHouseAndFlat`
-- `identityDocType`
-- `identityDocNumber`
-- `identityDocIssuer`
-- `postCode`
-- `gender`
-- `nationality`
+#### POST /api/v2/kyc/merchant/client/register
 
-### Optional fields (DTO level)
+#### Params:
+- **email** - string(255)
+- **phone** - string(100), optional
+- **gender** - Gender
+- **firstNameRu** - string(255), First name in Russian (if present in PID)
+- **lastNameRu** - string(255), Last name in Russian (if present in PID)
+- **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID)
+- **firstName** - string(255), First name in Latin characters (if present in PID)
+- **lastName** - string(255), Last name in Latin characters (if present in PID)
 
-- `birthDate`
-- `identityDocIssueDate`
-- `identityDocExpireDate`
-- `personalNumber`
-- `notUSTaxPayer`
-- `agreedWithOffer`
-- `exchangeInPersonalInterests`
-- `files`
-- `externalClientId`
-- `isPotentialDrop`
+- **placeOfBirth** - string(unlimited), Place of birth
+- **birthDate** - "YYYY-MM-DD", Date of birth
+- **nationality** - CountryCode, Nationality by birth
 
-### Business-required conditions
+- **residence** - CountryCode, Country of issued PID
+- **identityDocType** - DocType, Type of PID from the list
+- **identityDocIssueDate** - "YYYY-MM-DD", Issue date of PID
+- **identityDocExpireDate** - "YYYY-MM-DD", Expiry date of PID
+- **identityDocNumber** - string(50), Series and number of PID
+- **identityDocIssuer** - string(unlimited), Authority that issued the PID
+- **personalNumber** - string(50), Identification number from PID
 
-- `personalNumber` is required when `registrationCountry` contains `112` (Belarus).
-  - otherwise service throws: `Personal number must not be empty for registration country BLR`.
-- `notUSTaxPayer`, `agreedWithOffer`, `exchangeInPersonalInterests` are not hard-required for DTO validation, but they affect follow-up CRM processing.
+> Registration address data may differ depending on the country. Fill in the fields that correspond to the address format in the user’s registration country.
 
-### Response
+- **registrationCountry** - CountryCode, Registration country
+- **registrationRegion** - string(unlimited), Registration region
+- **residenceDistrict** - string(unlimited), Registration district
+- **registrationCity** - string(unlimited), Registration city (must include settlement name)
+- **registrationStreet** - string(unlimited), Registration street
+- **registrationHouseAndFlat** - string(100), House, building, and apartment number
+- **postCode** - string(20), Postal code
 
-- `id` - registered `clientId`
-- `status` - current client status
+- **notUSTaxPayer** - bool, Not a U.S. taxpayer
+- **agreedWithOffer** - bool, User’s consent to WhiteBird offer
+- **exchangeInPersonalInterests** - bool, Confirmation that exchange is for personal interests
+- **externalClientId** - string, Optional - client identification number of the user in partner's system
 
-### Request body example (with field groups)
+### !! All fields are required !!
 
-```json
+#### Response:
+- **clientId** - string(255)
+
+Request examples:
+
+``` json
+// BY user example
 {
-  "//required": "DTO @NotEmpty fields",
-  "email": "user@example.com",
-  "phone": "+79990000000",
-  "gender": "жен",
-  "firstNameRu": "Анна",
-  "lastNameRu": "Иванова",
-  "patronymicRu": "Ивановна",
-  "firstName": "Anna",
-  "lastName": "Ivanova",
-  "placeOfBirth": "Moscow",
-  "nationality": "643",
-  "residence": "643",
-  "registrationCountry": "643",
-  "registrationRegion": "Moscow region",
-  "residenceDistrict": "-",
-  "registrationCity": "Moscow",
-  "registrationStreet": "Lenina",
-  "registrationHouseAndFlat": "1-1",
-  "identityDocType": "9",
-  "identityDocNumber": "1234567890",
-  "identityDocIssuer": "MVD",
-  "postCode": "101000",
-  "//optional": "DTO optional fields",
-  "birthDate": "1994-05-09",
-  "identityDocIssueDate": "2020-01-02",
-  "identityDocExpireDate": "2030-01-02",
-  "personalNumber": "1234567A123PB1",
-  "notUSTaxPayer": true,
-  "agreedWithOffer": true,
-  "exchangeInPersonalInterests": true,
-  "externalClientId": "partner-user-123"
+   "email": "test.user.testov+15112024@ya.ru",
+   "phone": "+375297778899",
+   "gender": "муж",
+   "firstNameRu": "Джон",
+   "lastNameRu": "До",
+   "patronymicRu": "Иванович",
+   "firstName": "John",
+   "lastName": "Doe",
+   "placeOfBirth": "Republic of Belarus, city Minsk",
+   "birthDate": "1994-01-05",
+   "nationality": "112",
+   "residence": "112",
+   "identityDocType": "3",
+   "identityDocIssueDate": "2020-01-02",
+   "identityDocExpireDate": "2030-01-02",
+   "identityDocNumber": "HB2129425",
+   "identityDocIssuer": "Central ROVD of Minsk",
+   "personalNumber": "3029120H059PB9",
+   "registrationCountry": "112",
+   "registrationRegion": "Minsk region",
+   "residenceDistrict": "-",
+   "registrationCity": "Minsk",
+   "registrationStreet": "Kriptomanov street",
+   "registrationHouseAndFlat": "30/1-3",
+   "postCode": "220000",
+   "notUSTaxPayer": true,
+   "agreedWithOffer": true,
+   "exchangeInPersonalInterests": true
+}
+
+// RU user example
+{
+   "email":"test.user.testov+15112024@ya.ru",
+   "phone": "-",
+   "gender":"жен",
+   "firstNameRu":"Джон",
+   "lastNameRu":"До",
+   "patronymicRu":"Иванович",
+   "firstName": "-",
+   "lastName": "-",
+   "placeOfBirth":"Russian Federation, Jewish Autonomous Region, Birobidzhan",
+   "birthDate":"1994-05-09",
+   "nationality":"643",
+   "residence":"643",
+   "identityDocType":"9",
+   "identityDocIssueDate":"2020-01-02",
+   "identityDocExpireDate":"2030-01-02",
+   "identityDocNumber":"9992129425",
+   "identityDocIssuer":"MIA of Russia, Jewish Autonomous Region",
+   "registrationCountry":"643",
+   "registrationRegion":"Jewish Autonomous Region",
+   "residenceDistrict":"Smidovich district",
+   "registrationCity":"Nikolaevka settlement",
+   "registrationStreet":"Komsomolskaya street",
+   "registrationHouseAndFlat":"23-30",
+   "postCode": "-",
+   "notUSTaxPayer": true,
+   "agreedWithOffer": true,
+   "exchangeInPersonalInterests": true
 }
 ```
 
-### Response body example
+### Client status
 
-```json
-{
-  "//required": "always present",
-  "id": "client-id",
-  "status": "PENDING"
-}
-```
+Request to get the client’s current status. The only valid status for transactions is VERIFIED.
 
-## 3. Client status endpoint
+#### POST /api/v2/kyc/merchant/client/status
 
-### POST `/api/v2/kyc/merchant/client/status`
+#### Params:
+- **clientId** - string(255)
+#### Response:
+- **String** - ClientStatus
 
-Returns current client status.
+### Crypto test requests
 
-Request:
-- `clientId` (request body)
-- `externalUserId` (optional request param)
+All users registered with Belarusian documents are required to pass the crypto test. This is a regulator requirement and cannot be bypassed. When using SDK, the test is built-in.
 
-Response:
-- `String` (`ClientStatus`)
+The test consists of 5 simple questions. Use GET crypto-test to retrieve them, then send the user’s answers in POST crypto-test.
 
-### Request body example
+#### GET /api/v2/kyc/merchant/client/crypto-test?clientId=
 
-```json
-{
-  "//required": "request body",
-  "clientId": "client-id"
-}
-```
+#### Response:
+- **cryptoTestRequired** - bool, whether the user must pass the test
+- **questions** - TestQuestion[], questions with answer options
 
-### Response body example
+#### POST /api/v2/kyc/merchant/client/crypto-test
 
-```json
-{
-  "//required": "plain string response body",
-  "value": "VERIFIED"
-}
-```
+#### Request:
+- **clientId** - string(255)
+- **answers** - object, “questionId”(string): answerId(int).
 
-## 4. Crypto test endpoints
+### Generate tokens request
 
-Crypto test is required for residents (BY rule path).  
-Flow: GET questions -> POST answers.
+Request to obtain client tokens for SDK use.  
+Not used in On/Off ramp API.
 
-### GET `/api/v2/kyc/merchant/client/crypto-test?clientId=...`
+#### POST /api/v2/auth/merchant/client/token/generate
 
-Request headers:
-- `x-api-key`
-- optional `externalClientId`
+#### Params:
+- **clientId** - string(255)
+- **externalClientId** - string, Optional - client identification number of the user in partner's system
 
-Response:
-- `cryptoTestRequired`: bool
-- `questions`: `TestQuestion[]` (present only when required)
+#### Response:
+- **token** - string(unlimited)
+- **refreshToken** - string(unlimited)
 
-If client is not resident:
+### Simple register request
 
-```json
-{
-  "cryptoTestRequired": false
-}
-```
+Request to obtain clientId for token/generate use but without KYC data.
 
-### GET response body example (resident)
+#### POST /api/v2/auth/merchant/client/register
 
-```json
-{
-  "//required": "always present",
-  "cryptoTestRequired": true,
-  "//optional": "present only when cryptoTestRequired = true",
-  "questions": [
-    {
-      "id": "1",
-      "title": "Question title",
-      "answers": [
-        {
-          "id": 11,
-          "title": "Answer title",
-          "correct": false
-        }
-      ]
-    }
-  ]
-}
-```
+#### Params:
+- **email** - string(255)
+- **phone** - string(255), Optional client's phone number
+- **merchantId** - string(255)
+- **externalClientId** - string, Optional - client identification number of the user in partner's system
 
-### POST `/api/v2/kyc/merchant/client/crypto-test`
+#### Response:
+- **id** - string(255), registered clientId
 
-Request body:
-- `clientId`
-- `exchangeInPersonalInterests`
-- `agreedWithOffer`
-- `notUSTaxPayer`
-- `answers` (`questionId -> answerId`)
-
-Response:
-
-```json
-{
-  "//required": "always present",
-  "accepted": true
-}
-```
-
-### POST request body example (with field groups)
-
-```json
-{
-  "//required": "request body fields",
-  "clientId": "client-id",
-  "answers": {
-    "1": 11,
-    "2": 21,
-    "3": 31,
-    "4": 41,
-    "5": 51
-  },
-  "//optional": "business flags",
-  "exchangeInPersonalInterests": true,
-  "agreedWithOffer": true,
-  "notUSTaxPayer": true
-}
-```
-
-Behavior:
-- for non-resident client: returns `{ "accepted": false }`.
-- for resident client: answer validation is strict; wrong set throws `Wrong answers to crypto test`.
-- `notUSTaxPayer`, `agreedWithOffer`, `exchangeInPersonalInterests` persist when sent as `true`.
-
-## 5. Additional useful endpoints
-
-### Merchant endpoints (`x-api-key`)
-
-1) **Get Sumsub SDK token**
-- `POST /api/v2/kyc/merchant/client/sumsub/token`
-- Request: `clientId`, `levelType`
-- Response: `token`, `validTill`
-
-2) **Update offer agreement flags**
-- `POST /api/v2/kyc/merchant/client/agreed-offer`
-- Request: `clientId`, `exchangeInPersonalInterests`, `agreedWithOffer`, `notUSTaxPayer`
-- Response: `"OK"`
-
-3) **Get personal number**
-- `POST /api/v2/kyc/merchant/client/personal-number`
-- Request: `clientId`
-- Response: `personalNumber`
-
-### Auth side (used together with registration in many integrations)
-
-1) `POST /api/v2/auth/merchant/client/register` (light register)  
-2) `POST /api/v2/auth/merchant/client/token/generate`
-
-## 6. User-side validation endpoints
-
-From `ClientValidationController` (`Bearer token`, user context):
-
-- `POST /api/v1/kyc/client/validate`
-- `POST /api/v1/kyc/client/confirm`
-- `POST /api/v1/kyc/client/ico/agreement`
-- `POST /api/v1/kyc/client/ico/agreements`
-
-These endpoints do not consume `postCode`, `notUSTaxPayer`, or `agreedWithOffer`.
-
-## 7. Minimal registration fields
-
-### Minimum technically valid payload
-
-Minimum for `POST /api/v2/kyc/merchant/client/register` is all DTO `@NotEmpty` fields listed in section 1.
-
-### Additional minimum for BY
-
-If `registrationCountry = "112"`, add:
-- `personalNumber` (non-empty)
-
-### Minimal example (non-BY)
-
-```json
-{
-  "email": "user@example.com",
-  "phone": "+79990000000",
-  "gender": "жен",
-  "firstNameRu": "Анна",
-  "lastNameRu": "Иванова",
-  "patronymicRu": "Ивановна",
-  "firstName": "Anna",
-  "lastName": "Ivanova",
-  "placeOfBirth": "Moscow",
-  "nationality": "643",
-  "residence": "643",
-  "registrationCountry": "643",
-  "registrationRegion": "Moscow region",
-  "residenceDistrict": "-",
-  "registrationCity": "Moscow",
-  "registrationStreet": "Lenina",
-  "registrationHouseAndFlat": "1-1",
-  "identityDocType": "9",
-  "identityDocNumber": "1234567890",
-  "identityDocIssuer": "MVD",
-  "postCode": "101000"
-}
-```
-
-### What else is required
-
-- header `x-api-key` (merchant key)
-- merchant permission for `KYC_REGISTER_EP`
-- for external linkage flows, pass `externalClientId` where needed
-
-## 8. Data types
+#### Data types
 
 ```typescript
 enum Gender {
-  Men = "муж",
-  Woman = "жен"
+    Men = "муж",    // male
+    Woman = "жен"   // female
+}
+
+CountryCode = string // ISO country code
+
+enum DocType {
+    PassportBY = "3",           // Belarusian passport
+    ResidencePermitBY = "6",    // Belarusian residence permit
+    RefugeeCertificateBY = "7", // Belarusian refugee certificate
+    ForeignPassport = "9",      // Foreign passport
+    IDCardBY = "15",            // Belarusian ID card
+    ForeignBiometricResidencePermitBY = "16", // Biometric residence permit for foreign citizens in Belarus
+    RefugeeBiometricResidencePermitBY = "17", // Biometric residence permit for stateless persons in Belarus
+    Other = "99"                // Other
 }
 
 enum ClientStatus {
-  CREATED = "CREATED",
-  PENDING = "PENDING",
-  VERIFIED = "VERIFIED",
-  FROZEN = "FROZEN",
-  ARREST = "ARREST"
+    CREATED = "CREATED",    // AML documents not provided
+    PENDING = "PENDING",    // Awaiting AML check
+    VERIFIED = "VERIFIED",  // Allowed to make transactions
+    FROZEN = "FROZEN",      // Final status (duplicate account)
+    ARREST = "ARREST"       // Final status (dirty crypto used)
 }
 
 interface TestQuestion {
-  id: string;
-  title: string;
-  answers: TestAnswer[];
+    id: string;
+    title: string;
+    answers: TestAnswer[]
 }
 
 interface TestAnswer {
-  id: number;
-  title: string;
-  correct: boolean;
+    id: number;
+    title: string;
+    correct: boolean;
 }
 ```
