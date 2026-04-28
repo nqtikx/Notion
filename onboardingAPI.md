@@ -32,8 +32,6 @@ All requests are authorized with the `x-api-key` header.
 
 Creates a WhiteBird client from a complete KYC/PID data set.
 
-If the identity document does not contain registration address information, the partner should obtain this data from other documents confirming residence (utility bills, bank statements, etc.) or verbally from the user.
-
 ### Request fields
 
 #### Contact and partner identifiers
@@ -321,7 +319,7 @@ Submits answers to the crypto test.
 
 ### `POST /api/v2/auth/merchant/client/register`
 
-Registers a merchant client without sending full KYC data. Use this flow when SDK will collect/continue KYC later.
+Registers a merchant client without sending full KYC data.
 
 ### Request fields
 
@@ -349,7 +347,7 @@ Registers a merchant client without sending full KYC data. Use this flow when SD
 ```json
 {
   "id": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
-  "status": "EMAIL_VERIFIED"
+  "status": "NOT_VERIFIED"
 }
 ```
 
@@ -357,7 +355,7 @@ Registers a merchant client without sending full KYC data. Use this flow when SD
 
 ### `POST /api/v2/auth/merchant/client/token/generate`
 
-Generates access tokens for SDK use. Not used in On/Off-ramp API.
+Generates access tokens for merchant client.
 
 ### Request fields
 
@@ -445,11 +443,6 @@ enum KycClientStatus {
   VERIFIED = "VERIFIED",
   FROZEN = "FROZEN",
   ARREST = "ARREST"
-}
-
-enum AuthUserStatus {
-  NEW = "NEW",
-  EMAIL_VERIFIED = "EMAIL_VERIFIED"
 }
 
 interface TestQuestion {
