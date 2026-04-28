@@ -73,23 +73,6 @@ This section lists practical error responses for V2 merchant exchange flow endpo
 - `/api/v2/exchange/merchant/order/current`
 - `/api/v2/exchange/merchant/order/history`
 
-### Common error response shape
-
-```json
-{
-  "message": "Error description",
-  "code": 400,
-  "status": "ERROR_STATUS",
-  "fields": [
-    { "field": "fieldName", "value": "rejectedValue", "message": "Validation error text" }
-  ]
-}
-```
-
-Notes:
-- `fields` is present only for validation cases with field-level details.
-- `status` may contain either HTTP reason phrase (for generic exceptions) or domain error code (for business validation).
-
 ### Errors and status routing table
 
 | Scope | HTTP | `status` | When it occurs | Example JSON response |
