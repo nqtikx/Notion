@@ -52,11 +52,6 @@ For full payload examples, see:
 | `CLIENT_EMAIL_CHANGED` | Client email changed | Sync updated client email | `id` *(can be `null`)*, `clientId`, `email`, `createdAt` |
 | `CRM_EVENT_PROCESSED` | CRM event processed | Notify CRM pipeline completion | `id` *(can be `null`)*, `clientId`, `topic`, `createdAt` |
 
-Additional webhook types used in code:
-- `SUMSUB_STATUS_CHANGED`
-- `CLIENT_EMAIL_CHANGED`
-- `CRM_EVENT_PROCESSED`
-
 ---
 
 ## 2) Signature verification (step-by-step)
