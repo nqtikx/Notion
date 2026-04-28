@@ -36,7 +36,7 @@ Additional webhook types used in code:
 Every webhook request includes header:
 - `x-payload-digest`
 
-<img width="1024" height="1443" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
+<img width="512" height="722" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
 
 
 ## 3) Delivery behavior (what merchant should expect)
