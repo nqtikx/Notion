@@ -74,7 +74,7 @@ This page lists practical error responses for V2 merchant exchange flow endpoint
 - `/api/v2/exchange/merchant/order`
 - `/api/v2/exchange/merchant/order/current`
 - `/api/v2/exchange/merchant/order/history`
-- 
+
 ---
 
 ## Errors and status routing table
