@@ -2,206 +2,139 @@
 
 ## Purpose
 
-For integration with partners who have a large user base with a full set of personal identity document (PID) information.
+This guide documents registration and related KYC endpoints used by merchant integrations.
 
-##### Description
-To carry out transactions on our platform, we need to collect PID information from users. If a partner already has the required user data, we can delegate the data collection task from users to the partner. This interaction will be formalized by an agreement, making the partner our “identification agent.”
+Source of truth in code:
+- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientManagementController.java`
+- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientValidationController.java`
+- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/dto/RegisterClientRequest.java`
+- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientManagementService.java`
 
-In this case, the user registration request in our system serves as the protocol for receiving user data from the "identification agent."
+All merchant endpoints below are backend-to-backend and require `x-api-key`.
 
-Request authorization is performed through the **x-api-key** header. All requests are Backend-to-Backend.
+## Table of Contents
 
-### Sections:
-- **[Registration](#register-post-request)**
-- **[Client status](#client-status)**
-- **[Crypto test (for BY users)](#crypto-test-requests)**
-- **[Token generation (for SDK)](#generate-tokens-request)**
-- **[Additional useful endpoints](#additional-useful-endpoints)**
+- [1. Registration endpoint](#1-registration-endpoint)
+- [2. Field usage by flow](#2-field-usage-by-flow)
+- [3. Client status endpoint](#3-client-status-endpoint)
+- [4. Crypto test endpoints](#4-crypto-test-endpoints)
+- [5. Additional useful endpoints](#5-additional-useful-endpoints)
+- [6. User-side validation endpoints](#6-user-side-validation-endpoints)
+- [7. Minimal registration fields](#7-minimal-registration-fields)
+- [8. Data types](#8-data-types)
 
-### Register POST request
+## 1. Registration endpoint
 
-Protocol for receiving a complete set of user data and creating an account.
+### POST `/api/v2/kyc/merchant/client/register`
 
-If the identity document does not contain registration address information, this data should be obtained from other documents confirming the user’s residence (utility bills, bank statements, etc.). It is also acceptable to obtain this information verbally from the user.
+Creates or registers a client in registration/KYC flow.
 
-#### POST /api/v2/kyc/merchant/client/register
+### Tech-required fields (DTO `@NotEmpty`)
 
-#### Params:
-- **email** - string(255), required
-- **phone** - string(255), required
-- **gender** - Gender, required
-- **firstNameRu** - string(255), First name in Russian (if present in PID), required
-- **lastNameRu** - string(255), Last name in Russian (if present in PID), required
-- **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID), required
-- **firstName** - string(255), First name in Latin characters (if present in PID), required
-- **lastName** - string(255), Last name in Latin characters (if present in PID), required
+- `email`
+- `phone`
+- `firstNameRu`
+- `lastNameRu`
+- `patronymicRu`
+- `firstName`
+- `lastName`
+- `residence`
+- `placeOfBirth`
+- `registrationCountry`
+- `registrationRegion`
+- `residenceDistrict`
+- `registrationCity`
+- `registrationStreet`
+- `registrationHouseAndFlat`
+- `identityDocType`
+- `identityDocNumber`
+- `identityDocIssuer`
+- `postCode`
+- `gender`
+- `nationality`
 
-- **placeOfBirth** - string(unlimited), Place of birth, required
-- **birthDate** - "YYYY-MM-DD", Date of birth
-- **nationality** - CountryCode, Nationality by birth, required
+### Optional fields (DTO level)
 
-- **residence** - CountryCode, Country of issued PID, required
-- **identityDocType** - DocType, Type of PID from the list, required
-- **identityDocIssueDate** - "YYYY-MM-DD", Issue date of PID
-- **identityDocExpireDate** - "YYYY-MM-DD", Expiry date of PID
-- **identityDocNumber** - string(50), Series and number of PID, required
-- **identityDocIssuer** - string(unlimited), Authority that issued the PID, required
-- **personalNumber** - string(50), Identification number from PID
+- `birthDate`
+- `identityDocIssueDate`
+- `identityDocExpireDate`
+- `personalNumber`
+- `notUSTaxPayer`
+- `agreedWithOffer`
+- `exchangeInPersonalInterests`
+- `files`
+- `externalClientId`
+- `isPotentialDrop`
 
-> Registration address data may differ depending on the country. Fill in the fields that correspond to the address format in the user’s registration country.
+### Business-required conditions
 
-- **registrationCountry** - CountryCode, Registration country, required
-- **registrationRegion** - string(unlimited), Registration region, required
-- **residenceDistrict** - string(unlimited), Registration district, required
-- **registrationCity** - string(unlimited), Registration city (must include settlement name), required
-- **registrationStreet** - string(unlimited), Registration street, required
-- **registrationHouseAndFlat** - string(100), House, building, and apartment number, required
-- **postCode** - string(20), Postal code, required
+- `personalNumber` is required when `registrationCountry` contains `112` (Belarus).
+  - otherwise service throws: `Personal number must not be empty for registration country BLR`.
+- `notUSTaxPayer`, `agreedWithOffer`, `exchangeInPersonalInterests` are not hard-required for DTO validation, but they affect follow-up CRM processing.
 
-- **notUSTaxPayer** - bool, Not a U.S. taxpayer
-- **agreedWithOffer** - bool, User’s consent to WhiteBird offer
-- **exchangeInPersonalInterests** - bool, Confirmation that exchange is for personal interests
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
+### Response
 
-> Core KYC fields are required. Some fields are country-specific and validated according to backend rules.
+- `id` - registered `clientId`
+- `status` - current client status
 
-### Important field behavior by flow
+## 2. Field usage by flow
 
-This section is aligned with `ClientManagementController` and `ClientValidationController` plus request DTO validation.
-
-| Field | `/merchant/client/register` | `/merchant/client/crypto-test` | `/merchant/client/agreed-offer` | `/merchant/client/status` | `/api/v1/kyc/client/validate` |
+| Field | Register | Crypto-test POST | Agreed-offer POST | Status POST | Validate POST |
 |---|---|---|---|---|---|
 | `postCode` | Required (`@NotEmpty`) | Not used | Not used | Not used | Not used |
-| `notUSTaxPayer` | Optional business flag (primitive `boolean`, defaults to `false` if omitted) | Optional business flag in request body (primitive `boolean`) | Optional business flag in request body (primitive `boolean`) | Not used | Not used |
-| `agreedWithOffer` | Optional business flag (primitive `boolean`, defaults to `false` if omitted) | Optional business flag in request body (primitive `boolean`) | Main field of this endpoint | Not used | Not used |
+| `notUSTaxPayer` | Optional bool | Optional bool | Optional bool | Not used | Not used |
+| `agreedWithOffer` | Optional bool | Optional bool | Optional bool | Not used | Not used |
 
 Notes:
-- `postCode` is technically mandatory for register request validation.  
-  For countries where classic postal code is not available in PID, partner still must pass a non-empty value (for example, `"-"`), otherwise request fails validation.
-- `notUSTaxPayer` and `agreedWithOffer` are not `@NotEmpty` and are not hard-required for initial registration, but they affect follow-up processing:
-  - in register flow, immediate WB CRM full update is scheduled only when all three are `true`: `agreedWithOffer`, `notUSTaxPayer`, `exchangeInPersonalInterests`;
-  - in crypto-test/agreed-offer flows, these flags are updated and then synced to WB CRM.
-- `ClientValidationController` (`/api/v1/kyc/client/validate`, `/confirm`) does not consume these fields at all; it works with status/confirmation timeline.
+- `postCode` must be non-empty for register request validation.
+- `notUSTaxPayer` and `agreedWithOffer` are accepted in multiple flows and persist when sent as `true`.
 
-#### Response:
-- **id** - string(255), registered clientId
-- **status** - string, current client status
+## 3. Client status endpoint
 
-Request examples:
+### POST `/api/v2/kyc/merchant/client/status`
 
-``` json
-// BY user example
-{
-   "email": "test.user.testov+15112024@ya.ru",
-   "phone": "+375297778899",
-   "gender": "муж",
-   "firstNameRu": "Джон",
-   "lastNameRu": "До",
-   "patronymicRu": "Иванович",
-   "firstName": "John",
-   "lastName": "Doe",
-   "placeOfBirth": "Republic of Belarus, city Minsk",
-   "birthDate": "1994-01-05",
-   "nationality": "112",
-   "residence": "112",
-   "identityDocType": "3",
-   "identityDocIssueDate": "2020-01-02",
-   "identityDocExpireDate": "2030-01-02",
-   "identityDocNumber": "HB2129425",
-   "identityDocIssuer": "Central ROVD of Minsk",
-   "personalNumber": "3029120H059PB9",
-   "registrationCountry": "112",
-   "registrationRegion": "Minsk region",
-   "residenceDistrict": "-",
-   "registrationCity": "Minsk",
-   "registrationStreet": "Kriptomanov street",
-   "registrationHouseAndFlat": "30/1-3",
-   "postCode": "220000",
-   "notUSTaxPayer": true,
-   "agreedWithOffer": true,
-   "exchangeInPersonalInterests": true
-}
+Returns current client status.
 
-// RU user example
-{
-   "email":"test.user.testov+15112024@ya.ru",
-   "phone": "-",
-   "gender":"жен",
-   "firstNameRu":"Джон",
-   "lastNameRu":"До",
-   "patronymicRu":"Иванович",
-   "firstName": "-",
-   "lastName": "-",
-   "placeOfBirth":"Russian Federation, Jewish Autonomous Region, Birobidzhan",
-   "birthDate":"1994-05-09",
-   "nationality":"643",
-   "residence":"643",
-   "identityDocType":"9",
-   "identityDocIssueDate":"2020-01-02",
-   "identityDocExpireDate":"2030-01-02",
-   "identityDocNumber":"9992129425",
-   "identityDocIssuer":"MIA of Russia, Jewish Autonomous Region",
-   "registrationCountry":"643",
-   "registrationRegion":"Jewish Autonomous Region",
-   "residenceDistrict":"Smidovich district",
-   "registrationCity":"Nikolaevka settlement",
-   "registrationStreet":"Komsomolskaya street",
-   "registrationHouseAndFlat":"23-30",
-   "postCode": "-",
-   "notUSTaxPayer": true,
-   "agreedWithOffer": true,
-   "exchangeInPersonalInterests": true
-}
-```
+Request:
+- `clientId` (request body)
+- `externalUserId` (optional request param)
 
-### Client status
+Response:
+- `String` (`ClientStatus`)
 
-Request to get the client’s current status. The only valid status for transactions is VERIFIED.
+## 4. Crypto test endpoints
 
-#### POST /api/v2/kyc/merchant/client/status
+Crypto test is required for residents (BY rule path).  
+Flow: GET questions -> POST answers.
 
-#### Params:
-- **clientId** - string(255)
-- **externalUserId** - string, optional (`request param`)
-#### Response:
-- **String** - ClientStatus
+### GET `/api/v2/kyc/merchant/client/crypto-test?clientId=...`
 
-Practical notes:
-- Endpoint is merchant-scoped (`x-api-key` required).
-- For integrations using external IDs, pass `externalUserId` to align access checks.
+Request headers:
+- `x-api-key`
+- optional `externalClientId`
 
-### Crypto test requests
+Response:
+- `cryptoTestRequired`: bool
+- `questions`: `TestQuestion[]` (present only when required)
 
-All users registered as Belarus residents are required to pass the crypto test. This is a regulator requirement and cannot be bypassed. When using SDK, the test is built-in.
+If client is not resident:
 
-The test consists of 5 simple questions. Use GET crypto-test to retrieve them, then send the user’s answers in POST crypto-test.
-
-#### GET /api/v2/kyc/merchant/client/crypto-test?clientId=
-
-#### Response:
-- **cryptoTestRequired** - bool, whether the user must pass the test
-- **questions** - TestQuestion[], questions with answer options
-
-Behavior:
-- If user is not resident, response is:
 ```json
 {
   "cryptoTestRequired": false
 }
 ```
-- In this case `questions` is omitted.
 
-#### POST /api/v2/kyc/merchant/client/crypto-test
+### POST `/api/v2/kyc/merchant/client/crypto-test`
 
-#### Request:
-- **clientId** - string(255)
-- **exchangeInPersonalInterests** - bool
-- **agreedWithOffer** - bool
-- **notUSTaxPayer** - bool
-- **answers** - object, “questionId”(long): answerId(long)
+Request body:
+- `clientId`
+- `exchangeInPersonalInterests`
+- `agreedWithOffer`
+- `notUSTaxPayer`
+- `answers` (`questionId -> answerId`)
 
-#### Response:
-- **accepted** - bool
+Response:
 
 ```json
 {
@@ -209,133 +142,116 @@ Behavior:
 }
 ```
 
-Behavior and validation details:
-- For non-resident clients service returns `{ "accepted": false }` and does not run answer validation.
-- For resident clients all 5 answers must be correct, otherwise request fails with validation error:
-  - `Wrong answers to crypto test`
-- Flags `exchangeInPersonalInterests`, `agreedWithOffer`, `notUSTaxPayer` are saved as positive flags when sent as `true`.
-- Passing crypto test updates KYC-side data and triggers sync to WB CRM; this is one of required steps before normal verified flow usage.
+Behavior:
+- for non-resident client: returns `{ "accepted": false }`.
+- for resident client: answer validation is strict; wrong set throws `Wrong answers to crypto test`.
+- `notUSTaxPayer`, `agreedWithOffer`, `exchangeInPersonalInterests` persist when sent as `true`.
 
-Important about field usage in this flow:
-- `notUSTaxPayer` and `agreedWithOffer` are accepted both in register and in crypto-test endpoints.
-- They are not hard-required by DTO annotations, but they are operationally important for downstream processing.
+## 5. Additional useful endpoints
 
-### Generate tokens request
+### Merchant endpoints (`x-api-key`)
 
-Request to obtain client tokens for SDK use.  
-Not used in On/Off ramp API.
-
-#### POST /api/v2/auth/merchant/client/token/generate
-
-#### Params:
-- **clientId** - string(255)
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
-
-#### Response:
-- **token** - string(unlimited)
-- **refreshToken** - string(unlimited)
-
-### Additional useful endpoints
-
-These endpoints are commonly used in production registration/KYC flow, but are often missed in initial integrations.
-
-#### Merchant API (`x-api-key`)
-
-1) **Get Sumsub token for SDK level**
-
+1) **Get Sumsub SDK token**
 - `POST /api/v2/kyc/merchant/client/sumsub/token`
-- Request:
-  - `clientId` - string
-  - `levelType` - `SumsubLevelType`
-- Response:
-  - `token` - string
-  - `validTill` - datetime
+- Request: `clientId`, `levelType`
+- Response: `token`, `validTill`
 
-2) **Confirm agreed offer state**
-
+2) **Update offer agreement flags**
 - `POST /api/v2/kyc/merchant/client/agreed-offer`
-- Request:
-  - `clientId` - string
-  - `exchangeInPersonalInterests` - bool
-  - `agreedWithOffer` - bool
-  - `notUSTaxPayer` - bool
+- Request: `clientId`, `exchangeInPersonalInterests`, `agreedWithOffer`, `notUSTaxPayer`
 - Response: `"OK"`
 
 3) **Get personal number**
-
 - `POST /api/v2/kyc/merchant/client/personal-number`
-- Request:
-  - `clientId` - string
-- Response:
-  - `personalNumber` - string
+- Request: `clientId`
+- Response: `personalNumber`
 
-#### User API (Bearer token)
+### Auth side (used together with registration in many integrations)
 
-1) **Validation status check**
+1) `POST /api/v2/auth/merchant/client/register` (light register)  
+2) `POST /api/v2/auth/merchant/client/token/generate`
+
+## 6. User-side validation endpoints
+
+From `ClientValidationController` (`Bearer token`, user context):
+
 - `POST /api/v1/kyc/client/validate`
-
-2) **Confirm validation window**
 - `POST /api/v1/kyc/client/confirm`
-
-3) **ICO agreement endpoints**
 - `POST /api/v1/kyc/client/ico/agreement`
 - `POST /api/v1/kyc/client/ico/agreements`
 
-### Simple register request
+These endpoints do not consume `postCode`, `notUSTaxPayer`, or `agreedWithOffer`.
 
-Request to obtain clientId for token/generate use but without KYC data.
+## 7. Minimal registration fields
 
-#### POST /api/v2/auth/merchant/client/register
+### Minimum technically valid payload
 
-#### Params:
-- **email** - string(255), required
-- **phone** - string(100/255), required
-- **merchantId** - string(255), Optional - x-api-key
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
-- **agreedWithOffer** - bool
+Minimum for `POST /api/v2/kyc/merchant/client/register` is all DTO `@NotEmpty` fields listed in section 1.
 
-#### Response:
-- **id** - string(255), registered clientId
-- **status** - string, current client status
+### Additional minimum for BY
 
-#### Data types
+If `registrationCountry = "112"`, add:
+- `personalNumber` (non-empty)
+
+### Minimal example (non-BY)
+
+```json
+{
+  "email": "user@example.com",
+  "phone": "+79990000000",
+  "gender": "жен",
+  "firstNameRu": "Анна",
+  "lastNameRu": "Иванова",
+  "patronymicRu": "Ивановна",
+  "firstName": "Anna",
+  "lastName": "Ivanova",
+  "placeOfBirth": "Moscow",
+  "nationality": "643",
+  "residence": "643",
+  "registrationCountry": "643",
+  "registrationRegion": "Moscow region",
+  "residenceDistrict": "-",
+  "registrationCity": "Moscow",
+  "registrationStreet": "Lenina",
+  "registrationHouseAndFlat": "1-1",
+  "identityDocType": "9",
+  "identityDocNumber": "1234567890",
+  "identityDocIssuer": "MVD",
+  "postCode": "101000"
+}
+```
+
+### What else is required
+
+- header `x-api-key` (merchant key)
+- merchant permission for `KYC_REGISTER_EP`
+- for external linkage flows, pass `externalClientId` where needed
+
+## 8. Data types
 
 ```typescript
 enum Gender {
-    Men = "муж",    // male
-    Woman = "жен"   // female
-}
-
-CountryCode = string // ISO country code
-
-enum DocType {
-    PassportBY = "3",           // Belarusian passport
-    ResidencePermitBY = "6",    // Belarusian residence permit
-    RefugeeCertificateBY = "7", // Belarusian refugee certificate
-    ForeignPassport = "9",      // Foreign passport
-    IDCardBY = "15",            // Belarusian ID card
-    ForeignBiometricResidencePermitBY = "16", // Biometric residence permit for foreign citizens in Belarus
-    RefugeeBiometricResidencePermitBY = "17", // Biometric residence permit for stateless persons in Belarus
-    Other = "99"                // Other
+  Men = "муж",
+  Woman = "жен"
 }
 
 enum ClientStatus {
-    CREATED = "CREATED",    // AML documents not provided
-    PENDING = "PENDING",    // Awaiting AML check
-    VERIFIED = "VERIFIED",  // Allowed to make transactions
-    FROZEN = "FROZEN",      // Final status (duplicate account)
-    ARREST = "ARREST"       // Final status (dirty crypto used)
+  CREATED = "CREATED",
+  PENDING = "PENDING",
+  VERIFIED = "VERIFIED",
+  FROZEN = "FROZEN",
+  ARREST = "ARREST"
 }
 
 interface TestQuestion {
-    id: string;
-    title: string;
-    answers: TestAnswer[]
+  id: string;
+  title: string;
+  answers: TestAnswer[];
 }
 
 interface TestAnswer {
-    id: number;
-    title: string;
-    correct: boolean;
+  id: number;
+  title: string;
+  correct: boolean;
 }
 ```
