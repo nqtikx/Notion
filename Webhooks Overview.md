@@ -49,7 +49,6 @@ For full payload examples, see:
 | `client.payment.method.failed` | Payment method binding failed | Notify failed binding with diagnostics | `id`, `clientId`, `bindId`, `cardMask`, `brand`, `providerType`, `createdAt` |
 | `SUMSUB_STATUS_CHANGED` | Sumsub webhook processed | Notify KYC/AML status update | `id` *(can be `null`)*, `clientId`, `processName`, `levelType`, `reviewResult`, `actionId`, `createdAt` |
 | `CLIENT_EMAIL_CHANGED` | Client email changed | Sync updated client email | `id` *(can be `null`)*, `clientId`, `email`, `createdAt` |
-| `CRM_EVENT_PROCESSED` | Type exists in codebase; no active sender path in current flow | Reserved/technical event type | `id` *(can be `null`)*, `clientId`, `topic`, `createdAt` |
 
 ---
 
