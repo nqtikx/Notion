@@ -357,7 +357,7 @@ _Purpose:_ synchronize the updated email in merchant systems.
   "type": "CLIENT_EMAIL_CHANGED",
   "createdAt": "2025-04-27T16:10:00",
   "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
-  "email": "new-email@example.com"
+  "email": "miracleqxz@gmail.com"
 }
 ```
 
