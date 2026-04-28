@@ -31,38 +31,90 @@ Additional webhook types used in code:
 
 ---
 
-## 2) Signature verification
+## 2) Signature verification (step-by-step)
 
-Each webhook request contains header:
+Every webhook request includes header:
 - `x-payload-digest`
 
-Verification parameters:
+This header is a signature of the request body.
 
-| Parameter | Value |
+### What exactly is signed
+
+| Item | Value |
 |---|---|
 | Algorithm | `HMAC-SHA1` |
-| Key | Merchant `webhookSigningHash` |
-| Message | Raw request body bytes (exactly as received) |
-| Output | Hex digest |
+| Secret key | Merchant `webhookSigningHash` |
+| Data to sign | Raw HTTP body bytes (exact bytes from request, before JSON parsing/reformatting) |
+| Result format | Lowercase hex string |
 
-Validation rule:
-1. Compute HMAC-SHA1 on raw body.
-2. Compare with `x-payload-digest` (constant-time compare recommended).
-3. Reject invalid signature (`401`/`403`).
+### Verification algorithm
+
+1. Read raw request body bytes as-is.
+2. Compute `HMAC-SHA1(rawBody, webhookSigningHash)`.
+3. Convert result to hex.
+4. Compare computed value with header `x-payload-digest`.
+5. Use constant-time compare to avoid timing attacks.
+
+### If signature is invalid
+
+- Return `401` or `403`.
+- Do **not** execute business logic.
+- Log reason (`invalid signature`) with webhook `id` if available.
+
+### If signature is valid
+
+- Continue normal webhook handling.
+- Prefer idempotent flow (see section 3).
+
+### Typical integration mistakes to avoid
+
+- Verifying parsed/re-serialized JSON instead of raw body bytes.
+- Trimming spaces/newlines before verification.
+- Using wrong secret (after regeneration old secret is invalid).
+- Case-insensitive string compare without constant-time logic.
 
 ---
 
-## 3) Delivery behavior
+## 3) Delivery behavior (what merchant should expect)
+
+Webhook sending is asynchronous. Delivery is "at least once", so duplicates are possible.
+
+### Sender behavior
 
 | Behavior | Description |
 |---|---|
 | Sending mode | Asynchronous |
-| Retry policy | Up to 3 retries on transport errors (`RestClientException`) |
-| Backoff | 1 second |
-| Timeouts | Connect/read timeout: 15s |
-| Delivery log | Response code/message and last send time are stored |
-| Receiver requirement | Idempotent processing is required |
-| Dedup key | Webhook `id` |
+| Retry policy | Up to 3 attempts on transport failures (`RestClientException`) |
+| Backoff | 1 second between attempts |
+| Timeouts | 15s connect / 15s read |
+| Delivery log | Response code, response message, and last send timestamp are stored |
+
+### Merchant requirements (critical)
+
+| Requirement | Why |
+|---|---|
+| Handle webhook idempotently | Same event can be sent again on retry |
+| Use webhook `id` as dedup key | Stable unique event identifier |
+| Return `2xx` for already processed events | Prevent unnecessary retries |
+
+### Recommended processing flow on merchant side
+
+1. Verify signature (`x-payload-digest`).
+2. Extract `id` from payload.
+3. Check dedup storage (Redis/DB) by `id`.
+4. If already processed: return `200 OK`.
+5. If new: run business logic once, save `id` as processed, return `200 OK`.
+
+Recommended dedup retention window: at least `24h` (better `48-72h` depending on your ops policy).
+
+### What triggers retries
+
+- Network errors / timeouts.
+- Any transport failure represented as `RestClientException`.
+
+### What does not trigger retries (in normal flow)
+
+- Successful delivery with valid HTTP response.
 
 ---
 
