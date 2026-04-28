@@ -69,6 +69,4 @@ _To be completed._
 
 _To be completed._
 
-## 6. Webhooks and callbacks
-
-_To be completed._
+## 6. [Webhooks and callbacks](./Webhooks%20Overview.md)
