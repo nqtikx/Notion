@@ -333,8 +333,6 @@ _Purpose:_ notify about binding failure with card/provider diagnostic fields.
 }
 ```
 
-## Additional events used in code
-
 ### `SUMSUB_STATUS_CHANGED`
 _When sent:_ after processing an incoming Sumsub webhook (`SumsubWebhookProcessedMessage`).  
 _Purpose:_ deliver KYC/AML review result to merchant systems.
