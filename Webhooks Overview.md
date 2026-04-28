@@ -36,75 +36,8 @@ Additional webhook types used in code:
 Every webhook request includes header:
 - `x-payload-digest`
 
-This header is a signature of the request body.
+<img width="1024" height="1443" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
 
-### What exactly is signed
-
-| Item | Value |
-|---|---|
-| Algorithm | `HMAC-SHA1` |
-| Secret key | Merchant `webhookSigningHash` |
-| Data to sign | Raw HTTP body bytes (exact bytes from request, before JSON parsing/reformatting) |
-| Result format | Lowercase hex string |
-
-### Verification algorithm
-
-1. Read raw request body bytes as-is.
-2. Compute `HMAC-SHA1(rawBody, webhookSigningHash)`.
-3. Convert result to hex.
-4. Compare computed value with header `x-payload-digest`.
-5. Use constant-time compare to avoid timing attacks.
-
-### If signature is invalid
-
-- Return `401` or `403`.
-- Do **not** execute business logic.
-- Log reason (`invalid signature`) with webhook `id` if available.
-
-### Which status to return: `401` vs `403`
-
-Use one simple rule in integration:
-
-- Return **`401 Unauthorized`** when auth/signature data is missing or malformed:
-  - header `x-payload-digest` is missing
-  - header is empty
-  - header is not valid hex format
-- Return **`403 Forbidden`** when signature is present but verification failed:
-  - computed HMAC does not match received digest
-
-If you do not need this distinction, always return `401` for any signature error (also acceptable).
-
-### Step-by-step flow for sequence diagram
-
-1. **Receive webhook request** (`POST`).
-2. **Read raw body bytes** (exactly as received).
-3. **Read header** `x-payload-digest`.
-4. **Validate header presence/format**:
-   - if missing/invalid -> return `401`, stop.
-5. **Compute signature**:
-   - `expected = HMAC_SHA1(rawBody, webhookSigningHash)` in hex.
-6. **Compare signatures** (constant-time compare):
-   - if mismatch -> return `403`, stop.
-7. **Parse JSON payload**.
-8. **Extract `id`** and check dedup storage.
-9. **If duplicate `id`** -> return `200` (already processed), stop.
-10. **Execute business logic once**.
-11. **Store `id` as processed**.
-12. **Return `200`**.
-
-### If signature is valid
-
-- Continue normal webhook handling.
-- Prefer idempotent flow (see section 3).
-
-### Typical integration mistakes to avoid
-
-- Verifying parsed/re-serialized JSON instead of raw body bytes.
-- Trimming spaces/newlines before verification.
-- Using wrong secret (after regeneration old secret is invalid).
-- Case-insensitive string compare without constant-time logic.
-
----
 
 ## 3) Delivery behavior (what merchant should expect)
 
