@@ -65,8 +65,9 @@ WhiteBird signs the **raw HTTP request body bytes** (the exact JSON payload as r
 - key: merchant `webhookSigningHash`
 - output format: lowercase hex string
 - header containing signature: `x-payload-digest`
-> ⚠️ Do not recompute signature from parsed JSON object.  
+> Do not recompute signature from parsed JSON object.  
 > Always use the original raw body bytes from the HTTP request.
+
 ### Verification algorithm (receiver side)
 1. Read raw request body bytes exactly as received.
 2. Read header `x-payload-digest`.
@@ -75,17 +76,6 @@ WhiteBird signs the **raw HTTP request body bytes** (the exact JSON payload as r
 5. Compare computed digest with header value using constant-time compare.
 6. If equal -> signature is valid; continue processing.
 7. If not equal (or header missing) -> reject request (`401`/`403`).
-### Minimal pseudocode
-```text
-rawBody = getRawRequestBodyBytes(request)
-receivedDigest = request.header["x-payload-digest"]
-if receivedDigest is empty:
-    reject
-computedDigest = hexLower( HMAC_SHA1(rawBody, webhookSigningHash) )
-if !constantTimeEquals(computedDigest, receivedDigest):
-    reject
-accept
-```
 
 ### Quick checklist
 - raw body used for HMAC
