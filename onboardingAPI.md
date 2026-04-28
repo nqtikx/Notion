@@ -2,235 +2,506 @@
 
 ## Purpose
 
-For integration with partners who have a large user base with a full set of personal identity document (PID) information.
+This guide describes Backend-to-Backend registration APIs for partners that act as an identification agent for WhiteBird users.
 
-##### Description
-To carry out transactions on our platform, we need to collect PID information from users. If a partner already has the required user data, we can delegate the data collection task from users to the partner. This interaction will be formalized by an agreement, making the partner our “identification agent.”
+If the partner already has the required personal identity document (PID) data, WhiteBird can receive this data from the partner instead of collecting it directly from the user.
 
-In this case, the user registration request in our system serves as the protocol for receiving user data from the "identification agent."
+All requests are authorized with the `x-api-key` header.
 
-Request authorization is performed through the **x-api-key** header. All requests are Backend-to-Backend.
+## API flows
 
-### Sections:
-- **[Registration](#register-post-request)**
-- **[Client status](#client-status)**
-- **[Crypto test (for BY users)](#crypto-test-requests)**
-- **[Token generation (for SDK)](#generate-tokens-request)**
+| Flow | Endpoint sequence | Use case |
+|---|---|---|
+| Full KYC registration | `POST /api/v2/kyc/merchant/client/register` | Partner sends complete user KYC/PID data to WhiteBird |
+| Client status check | `POST /api/v2/kyc/merchant/client/status` | Partner checks whether the client is allowed to transact |
+| Crypto test for BY residents | `GET /api/v2/kyc/merchant/client/crypto-test` -> `POST /api/v2/kyc/merchant/client/crypto-test` | Required for Belarusian residents/documents |
+| SDK light registration | `POST /api/v2/auth/merchant/client/register` | Partner creates a client without full KYC data |
+| SDK token generation | `POST /api/v2/auth/merchant/client/token/generate` | Partner receives SDK access tokens for a registered client |
 
-### Register POST request
+## Common headers
 
-Protocol for receiving a complete set of user data and creating an account.
+| Header | Required | Description |
+|---|---|---|
+| `x-api-key` | Yes | Merchant API key used for Backend-to-Backend authorization |
 
-If the identity document does not contain registration address information, this data should be obtained from other documents confirming the user’s residence (utility bills, bank statements, etc.). It is also acceptable to obtain this information verbally from the user.
+> `externalClientId` is not a common header for all endpoints. Depending on the endpoint, it can be passed in the request body, as a header, or as a query parameter. See each endpoint section for details.
 
-#### POST /api/v2/kyc/merchant/client/register
+## 1. Full KYC registration
 
-#### Params:
-- **email** - string(255)
-- **phone** - string(100), optional
-- **gender** - Gender
-- **firstNameRu** - string(255), First name in Russian (if present in PID)
-- **lastNameRu** - string(255), Last name in Russian (if present in PID)
-- **patronymicRu** - string(255), Middle name/Patronymic in Russian (if present in PID)
-- **firstName** - string(255), First name in Latin characters (if present in PID)
-- **lastName** - string(255), Last name in Latin characters (if present in PID)
+### `POST /api/v2/kyc/merchant/client/register`
 
-- **placeOfBirth** - string(unlimited), Place of birth
-- **birthDate** - "YYYY-MM-DD", Date of birth
-- **nationality** - CountryCode, Nationality by birth
+Creates a WhiteBird client from a complete KYC/PID data set.
 
-- **residence** - CountryCode, Country of issued PID
-- **identityDocType** - DocType, Type of PID from the list
-- **identityDocIssueDate** - "YYYY-MM-DD", Issue date of PID
-- **identityDocExpireDate** - "YYYY-MM-DD", Expiry date of PID
-- **identityDocNumber** - string(50), Series and number of PID
-- **identityDocIssuer** - string(unlimited), Authority that issued the PID
-- **personalNumber** - string(50), Identification number from PID
+If the identity document does not contain registration address information, the partner should obtain this data from other documents confirming residence (utility bills, bank statements, etc.) or verbally from the user.
 
-> Registration address data may differ depending on the country. Fill in the fields that correspond to the address format in the user’s registration country.
+### Request fields
 
-- **registrationCountry** - CountryCode, Registration country
-- **registrationRegion** - string(unlimited), Registration region
-- **residenceDistrict** - string(unlimited), Registration district
-- **registrationCity** - string(unlimited), Registration city (must include settlement name)
-- **registrationStreet** - string(unlimited), Registration street
-- **registrationHouseAndFlat** - string(100), House, building, and apartment number
-- **postCode** - string(20), Postal code
+#### Contact and partner identifiers
 
-- **notUSTaxPayer** - bool, Not a U.S. taxpayer
-- **agreedWithOffer** - bool, User’s consent to WhiteBird offer
-- **exchangeInPersonalInterests** - bool, Confirmation that exchange is for personal interests
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `email` | `string` | Yes | User email. Must not be empty |
+| `phone` | `string` | Yes | User phone. Must not be empty |
+| `externalClientId` | `string` | No | User identifier in partner system |
 
-### !! All fields are required !!
+#### Personal data
 
-#### Response:
-- **clientId** - string(255)
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `gender` | `Gender` | Yes | User gender. See [Data dictionaries](#data-dictionaries) |
+| `firstNameRu` | `string` | Yes | First name in Russian/Cyrillic form |
+| `lastNameRu` | `string` | Yes | Last name in Russian/Cyrillic form |
+| `patronymicRu` | `string` | Yes | Patronymic/middle name in Russian/Cyrillic form. If absent in PID, send a placeholder agreed with WhiteBird |
+| `firstName` | `string` | Yes | First name in Latin form. If absent in PID, send a placeholder agreed with WhiteBird |
+| `lastName` | `string` | Yes | Last name in Latin form. If absent in PID, send a placeholder agreed with WhiteBird |
+| `placeOfBirth` | `string` | Yes | Place of birth |
+| `birthDate` | `string` | No | Date of birth in `YYYY-MM-DD` format |
+| `nationality` | `CountryCode` | Yes | Nationality/citizenship code |
+| `residence` | `CountryCode` | Yes | Country of residence / country related to issued PID |
 
-Request examples:
+#### Identity document
 
-``` json
-// BY user example
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `identityDocType` | `DocType` | Yes | Identity document type |
+| `identityDocIssueDate` | `string` | No | Issue date in `YYYY-MM-DD` format |
+| `identityDocExpireDate` | `string` | No | Expiry date in `YYYY-MM-DD` format |
+| `identityDocNumber` | `string` | Yes | Identity document number / series and number |
+| `identityDocIssuer` | `string` | Yes | Authority that issued the document |
+| `personalNumber` | `string` | Conditional | Required when `registrationCountry` contains `112` (Belarus). Optional for other countries |
+
+#### Registration address
+
+Registration address format differs by country. Fill in values that correspond to the registration country format.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `registrationCountry` | `CountryCode` | Yes | Registration country |
+| `registrationRegion` | `string` | Yes | Registration region/state |
+| `residenceDistrict` | `string` | Yes | Registration district. Mapped internally to `registrationDistrict` |
+| `registrationCity` | `string` | Yes | City/locality/settlement |
+| `registrationStreet` | `string` | Yes | Street |
+| `registrationHouseAndFlat` | `string` | Yes | House, building and apartment |
+| `postCode` | `string` | Yes | Postal code. If not applicable, send a placeholder agreed with WhiteBird |
+
+#### Consents and flags
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `notUSTaxPayer` | `boolean` | No | Confirms that user is not a U.S. taxpayer |
+| `agreedWithOffer` | `boolean` | No | Confirms user agreement with WhiteBird offer |
+| `exchangeInPersonalInterests` | `boolean` | No | Confirms exchange is performed in user personal interests |
+| `files` | `string[]` | No | Optional file references, if supported by integration |
+| `isPotentialDrop` | `boolean` | No | Optional internal risk flag, use only if agreed with WhiteBird |
+
+### Request example (Belarus user)
+
+```json
 {
-   "email": "test.user.testov+15112024@ya.ru",
-   "phone": "+375297778899",
-   "gender": "муж",
-   "firstNameRu": "Джон",
-   "lastNameRu": "До",
-   "patronymicRu": "Иванович",
-   "firstName": "John",
-   "lastName": "Doe",
-   "placeOfBirth": "Republic of Belarus, city Minsk",
-   "birthDate": "1994-01-05",
-   "nationality": "112",
-   "residence": "112",
-   "identityDocType": "3",
-   "identityDocIssueDate": "2020-01-02",
-   "identityDocExpireDate": "2030-01-02",
-   "identityDocNumber": "HB2129425",
-   "identityDocIssuer": "Central ROVD of Minsk",
-   "personalNumber": "3029120H059PB9",
-   "registrationCountry": "112",
-   "registrationRegion": "Minsk region",
-   "residenceDistrict": "-",
-   "registrationCity": "Minsk",
-   "registrationStreet": "Kriptomanov street",
-   "registrationHouseAndFlat": "30/1-3",
-   "postCode": "220000",
-   "notUSTaxPayer": true,
-   "agreedWithOffer": true,
-   "exchangeInPersonalInterests": true
-}
-
-// RU user example
-{
-   "email":"test.user.testov+15112024@ya.ru",
-   "phone": "-",
-   "gender":"жен",
-   "firstNameRu":"Джон",
-   "lastNameRu":"До",
-   "patronymicRu":"Иванович",
-   "firstName": "-",
-   "lastName": "-",
-   "placeOfBirth":"Russian Federation, Jewish Autonomous Region, Birobidzhan",
-   "birthDate":"1994-05-09",
-   "nationality":"643",
-   "residence":"643",
-   "identityDocType":"9",
-   "identityDocIssueDate":"2020-01-02",
-   "identityDocExpireDate":"2030-01-02",
-   "identityDocNumber":"9992129425",
-   "identityDocIssuer":"MIA of Russia, Jewish Autonomous Region",
-   "registrationCountry":"643",
-   "registrationRegion":"Jewish Autonomous Region",
-   "residenceDistrict":"Smidovich district",
-   "registrationCity":"Nikolaevka settlement",
-   "registrationStreet":"Komsomolskaya street",
-   "registrationHouseAndFlat":"23-30",
-   "postCode": "-",
-   "notUSTaxPayer": true,
-   "agreedWithOffer": true,
-   "exchangeInPersonalInterests": true
+  "email": "test.user.testov+15112024@ya.ru",
+  "phone": "+375297778899",
+  "gender": "муж",
+  "firstNameRu": "Джон",
+  "lastNameRu": "До",
+  "patronymicRu": "Иванович",
+  "firstName": "John",
+  "lastName": "Doe",
+  "placeOfBirth": "Republic of Belarus, city Minsk",
+  "birthDate": "1994-01-05",
+  "nationality": "112",
+  "residence": "112",
+  "identityDocType": "3",
+  "identityDocIssueDate": "2020-01-02",
+  "identityDocExpireDate": "2030-01-02",
+  "identityDocNumber": "HB2129425",
+  "identityDocIssuer": "Central ROVD of Minsk",
+  "personalNumber": "3029120H059PB9",
+  "registrationCountry": "112",
+  "registrationRegion": "Minsk region",
+  "residenceDistrict": "-",
+  "registrationCity": "Minsk",
+  "registrationStreet": "Kriptomanov street",
+  "registrationHouseAndFlat": "30/1-3",
+  "postCode": "220000",
+  "notUSTaxPayer": true,
+  "agreedWithOffer": true,
+  "exchangeInPersonalInterests": true,
+  "externalClientId": "partner-client-123"
 }
 ```
 
-### Client status
+### Request example (foreign passport)
 
-Request to get the client’s current status. The only valid status for transactions is VERIFIED.
+```json
+{
+  "email": "test.user.testov+15112024@ya.ru",
+  "phone": "-",
+  "gender": "жен",
+  "firstNameRu": "Джон",
+  "lastNameRu": "До",
+  "patronymicRu": "Иванович",
+  "firstName": "-",
+  "lastName": "-",
+  "placeOfBirth": "Russian Federation, Jewish Autonomous Region, Birobidzhan",
+  "birthDate": "1994-05-09",
+  "nationality": "643",
+  "residence": "643",
+  "identityDocType": "9",
+  "identityDocIssueDate": "2020-01-02",
+  "identityDocExpireDate": "2030-01-02",
+  "identityDocNumber": "9992129425",
+  "identityDocIssuer": "MIA of Russia, Jewish Autonomous Region",
+  "registrationCountry": "643",
+  "registrationRegion": "Jewish Autonomous Region",
+  "residenceDistrict": "Smidovich district",
+  "registrationCity": "Nikolaevka settlement",
+  "registrationStreet": "Komsomolskaya street",
+  "registrationHouseAndFlat": "23-30",
+  "postCode": "-",
+  "notUSTaxPayer": true,
+  "agreedWithOffer": true,
+  "exchangeInPersonalInterests": true
+}
+```
 
-#### POST /api/v2/kyc/merchant/client/status
+### Response
 
-#### Params:
-- **clientId** - string(255)
-#### Response:
-- **String** - ClientStatus
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Registered WhiteBird client id |
+| `status` | `ClientStatus` | Current client status |
 
-### Crypto test requests
+```json
+{
+  "id": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "status": "PENDING"
+}
+```
 
-All users registered with Belarusian documents are required to pass the crypto test. This is a regulator requirement and cannot be bypassed. When using SDK, the test is built-in.
+### Notes
 
-The test consists of 5 simple questions. Use GET crypto-test to retrieve them, then send the user’s answers in POST crypto-test.
+- Java validation requires all `@NotEmpty` fields from the tables above.
+- Date strings are parsed as ISO local dates (`YYYY-MM-DD`).
+- `personalNumber` is additionally validated for Belarus registration country (`112`).
+- If all consent flags are `true`, WhiteBird schedules CRM user update after registration.
 
-#### GET /api/v2/kyc/merchant/client/crypto-test?clientId=
+## 2. Client status
 
-#### Response:
-- **cryptoTestRequired** - bool, whether the user must pass the test
-- **questions** - TestQuestion[], questions with answer options
+### `POST /api/v2/kyc/merchant/client/status`
 
-#### POST /api/v2/kyc/merchant/client/crypto-test
+Returns current client status. The only status allowed for transactions is `VERIFIED`.
 
-#### Request:
-- **clientId** - string(255)
-- **answers** - object, “questionId”(string): answerId(int).
+### Request fields
 
-### Generate tokens request
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id returned by registration |
 
-Request to obtain client tokens for SDK use.  
-Not used in On/Off ramp API.
+### Optional query parameters
 
-#### POST /api/v2/auth/merchant/client/token/generate
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `externalUserId` | `string` | No | Partner-side client id for additional client lookup |
 
-#### Params:
-- **clientId** - string(255)
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
+### Request example
 
-#### Response:
-- **token** - string(unlimited)
-- **refreshToken** - string(unlimited)
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
 
-### Simple register request
+### Response example
 
-Request to obtain clientId for token/generate use but without KYC data.
+```json
+"VERIFIED"
+```
 
-#### POST /api/v2/auth/merchant/client/register
+## 3. Crypto test
 
-#### Params:
-- **email** - string(255)
-- **phone** - string(255), Optional client's phone number
-- **merchantId** - string(255)
-- **externalClientId** - string, Optional - client identification number of the user in partner's system
+Belarusian resident users must pass the crypto test. This is a regulator requirement. When SDK is used, the test is built into the SDK flow.
 
-#### Response:
-- **id** - string(255), registered clientId
+### `GET /api/v2/kyc/merchant/client/crypto-test?clientId={clientId}`
 
-#### Data types
+Returns whether the crypto test is required and, if required, returns the questions.
+
+### Query parameters
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id |
+
+### Optional headers
+
+| Header | Required | Description |
+|---|---|---|
+| `externalClientId` | No | Partner-side client id for additional client lookup |
+
+### Response example: test is required
+
+```json
+{
+  "cryptoTestRequired": true,
+  "questions": [
+    {
+      "id": 1,
+      "title": "Question text",
+      "answers": [
+        {
+          "id": 10,
+          "title": "Answer text",
+          "correct": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Response example: test is not required
+
+```json
+{
+  "cryptoTestRequired": false
+}
+```
+
+### `POST /api/v2/kyc/merchant/client/crypto-test`
+
+Submits answers to the crypto test.
+
+### Request fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id |
+| `answers` | `object` | Yes | Map of question id to answer id. Example: `{ "1": 10 }` |
+| `notUSTaxPayer` | `boolean` | No | Can be set together with test submission |
+| `agreedWithOffer` | `boolean` | No | Can be set together with test submission |
+| `exchangeInPersonalInterests` | `boolean` | No | Can be set together with test submission |
+
+### Optional headers
+
+| Header | Required | Description |
+|---|---|---|
+| `externalClientId` | No | Partner-side client id for additional client lookup |
+
+### Request example
+
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "answers": {
+    "1": 10,
+    "2": 20,
+    "3": 30,
+    "4": 40,
+    "5": 50
+  },
+  "notUSTaxPayer": true,
+  "agreedWithOffer": true,
+  "exchangeInPersonalInterests": true
+}
+```
+
+### Response example
+
+```json
+{
+  "accepted": true
+}
+```
+
+### Notes
+
+- If the client is not a Belarus resident, response is `{ "accepted": false }` and no test update is needed.
+- Wrong answers cause validation error: `Wrong answers to crypto test`.
+
+## 4. SDK light registration
+
+### `POST /api/v2/auth/merchant/client/register`
+
+Registers a merchant client without sending full KYC data. Use this flow when SDK will collect/continue KYC later.
+
+### Request fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `email` | `string` | Yes | User email. Must not be empty |
+| `phone` | `string` | Yes | User phone. Must not be empty |
+| `externalClientId` | `string` | No | User identifier in partner system |
+| `agreedWithOffer` | `boolean` | No | Whether user agreed with WhiteBird offer during registration |
+| `merchantId` | `string` | No | Used by OTP registration flow; not required for B2B `x-api-key` flow |
+
+### Request example
+
+```json
+{
+  "email": "client@example.com",
+  "phone": "+375297778899",
+  "externalClientId": "partner-client-123",
+  "agreedWithOffer": true
+}
+```
+
+### Response example
+
+```json
+{
+  "id": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "status": "EMAIL_VERIFIED"
+}
+```
+
+## 5. SDK token generation
+
+### `POST /api/v2/auth/merchant/client/token/generate`
+
+Generates access tokens for SDK use. Not used in On/Off-ramp API.
+
+### Request fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id |
+| `externalClientId` | `string` | No | User identifier in partner system |
+
+### Request example
+
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "externalClientId": "partner-client-123"
+}
+```
+
+### Response fields
+
+| Field | Type | Description |
+|---|---|---|
+| `token` | `string` | Access token |
+| `refreshToken` | `string` | Refresh token, can be `null` |
+
+### Response example
+
+```json
+{
+  "token": "access-token",
+  "refreshToken": "refresh-token"
+}
+```
+
+## 6. Optional KYC support endpoints
+
+### `POST /api/v2/kyc/merchant/client/agreed-offer`
+
+Updates consent flags for an already registered client.
+
+Optional header: `externalClientId`.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id |
+| `notUSTaxPayer` | `boolean` | No | Confirms user is not a U.S. taxpayer |
+| `agreedWithOffer` | `boolean` | No | Confirms user agreement with WhiteBird offer |
+| `exchangeInPersonalInterests` | `boolean` | No | Confirms exchange is performed in user personal interests |
+
+Response:
+
+```json
+"OK"
+```
+
+### `POST /api/v2/kyc/merchant/client/personal-number`
+
+Returns stored personal number for a registered client.
+
+Optional header: `externalClientId`.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `clientId` | `string` | Yes | WhiteBird client id |
+
+Response:
+
+```json
+{
+  "personalNumber": "3029120H059PB9"
+}
+```
+
+## Data dictionaries
 
 ```typescript
 enum Gender {
-    Men = "муж",    // male
-    Woman = "жен"   // female
+  Men = "муж",      // male
+  Woman = "жен"    // female
 }
 
-CountryCode = string // ISO country code
+type CountryCode = string // Numeric ISO 3166-1 country code, e.g. "112" for Belarus, "643" for Russia
 
 enum DocType {
-    PassportBY = "3",           // Belarusian passport
-    ResidencePermitBY = "6",    // Belarusian residence permit
-    RefugeeCertificateBY = "7", // Belarusian refugee certificate
-    ForeignPassport = "9",      // Foreign passport
-    IDCardBY = "15",            // Belarusian ID card
-    ForeignBiometricResidencePermitBY = "16", // Biometric residence permit for foreign citizens in Belarus
-    RefugeeBiometricResidencePermitBY = "17", // Biometric residence permit for stateless persons in Belarus
-    Other = "99"                // Other
+  PassportBY = "3",                             // Belarusian passport
+  ResidencePermitBY = "6",                      // Belarusian residence permit
+  RefugeeCertificateBY = "7",                   // Belarusian refugee certificate
+  ForeignPassport = "9",                        // Foreign passport
+  IDCardBY = "15",                              // Belarusian ID card
+  ForeignBiometricResidencePermitBY = "16",     // Biometric residence permit for foreign citizens in Belarus
+  RefugeeBiometricResidencePermitBY = "17",     // Biometric residence permit for stateless persons in Belarus
+  Other = "99"                                  // Other
 }
 
 enum ClientStatus {
-    CREATED = "CREATED",    // AML documents not provided
-    PENDING = "PENDING",    // Awaiting AML check
-    VERIFIED = "VERIFIED",  // Allowed to make transactions
-    FROZEN = "FROZEN",      // Final status (duplicate account)
-    ARREST = "ARREST"       // Final status (dirty crypto used)
+  CREATED = "CREATED",
+  PENDING = "PENDING",
+  VERIFIED = "VERIFIED",
+  FROZEN = "FROZEN",
+  ARREST = "ARREST",
+  EMAIL_VERIFIED = "EMAIL_VERIFIED"
 }
 
 interface TestQuestion {
-    id: string;
-    title: string;
-    answers: TestAnswer[]
+  id: string | number;
+  title: string;
+  answers: TestAnswer[];
 }
 
 interface TestAnswer {
-    id: number;
-    title: string;
-    correct: boolean;
+  id: number;
+  title: string;
+  correct: boolean;
+}
+```
+
+## Common validation errors
+
+### Missing required field
+
+If a field marked as required is missing or empty, the request fails Java bean validation.
+
+Example:
+
+```json
+{
+  "error": "Validation failed",
+  "details": "email must not be empty"
+}
+```
+
+### Missing Belarus personal number
+
+For Belarus registration country (`112`), `personalNumber` is required.
+
+```json
+{
+  "error": "Personal number must not be empty for registration country BLR"
+}
+```
+
+### Wrong crypto test answers
+
+```json
+{
+  "error": "Wrong answers to crypto test"
 }
 ```
