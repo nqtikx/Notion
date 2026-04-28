@@ -4,12 +4,6 @@
 
 This guide documents registration and related KYC endpoints used by merchant integrations.
 
-Source of truth in code:
-- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientManagementController.java`
-- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientValidationController.java`
-- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/dto/RegisterClientRequest.java`
-- `kyc-service/src/main/java/io/wb/kyc/core/crm/client/ClientManagementService.java`
-
 All merchant endpoints below are backend-to-backend and require `x-api-key`.
 
 ## Table of Contents
