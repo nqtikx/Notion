@@ -58,9 +58,6 @@ For full payload examples, see:
 Every webhook request includes header:
 - `x-payload-digest`
 
-Payload date format used by sender serialization:
-- `createdAt`: `yyyy-MM-dd'T'HH:mm:ss` (no timezone suffix)
-
 <img width="512" height="722" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
 
 ## 3) Delivery behavior
