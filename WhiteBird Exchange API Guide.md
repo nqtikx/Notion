@@ -21,10 +21,8 @@ The document is focused on:
 - [1. Base principles](#1-base-principles)
 - [2. OnRamp (fiat -> crypto) — Merchant API](#2-onramp-fiat---crypto--merchant-api)
 - [3. OffRamp (crypto -> fiat) — Merchant API](#3-offramp-crypto---fiat--merchant-api)
-- [4. Client API mirror](#4-client-api-mirror)
-- [5. Errors and status routing](#5-errors-and-status-routing)
-- [6. Webhooks and callbacks](#6-webhooks-and-callbacks)
-- [7. Legacy v2 compatibility](#7-legacy-v2-compatibility)
+- [4. Errors and status routing](#5-errors-and-status-routing)
+- [5. Webhooks and callbacks](#6-webhooks-and-callbacks)
 
 ---
 
