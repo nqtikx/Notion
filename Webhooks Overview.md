@@ -59,6 +59,42 @@ Every webhook request includes header:
 
 <img width="512" height="722" alt="webhook flow" src="https://github.com/user-attachments/assets/84314fc4-d678-41c5-ac69-841d9012915e" />
 
+### What exactly is signed
+WhiteBird signs the **raw HTTP request body bytes** (the exact JSON payload as received), using:
+- algorithm: `HMAC-SHA1`
+- key: merchant `webhookSigningHash`
+- output format: lowercase hex string
+- header containing signature: `x-payload-digest`
+> ⚠️ Do not recompute signature from parsed JSON object.  
+> Always use the original raw body bytes from the HTTP request.
+### Verification algorithm (receiver side)
+1. Read raw request body bytes exactly as received.
+2. Read header `x-payload-digest`.
+3. Compute local digest: `HMAC-SHA1(rawBody, webhookSigningHash)`.
+4. Convert computed digest to lowercase hex.
+5. Compare computed digest with header value using constant-time compare.
+6. If equal -> signature is valid; continue processing.
+7. If not equal (or header missing) -> reject request (`401`/`403`).
+### Minimal pseudocode
+```text
+rawBody = getRawRequestBodyBytes(request)
+receivedDigest = request.header["x-payload-digest"]
+if receivedDigest is empty:
+    reject
+computedDigest = hexLower( HMAC_SHA1(rawBody, webhookSigningHash) )
+if !constantTimeEquals(computedDigest, receivedDigest):
+    reject
+accept
+```
+
+### Quick checklist
+- raw body used for HMAC
+- HMAC-SHA1 used
+- hex lowercase output
+- constant-time compare
+- reject if header missing/invalid
+- process idempotently after signature is valid
+
 ## 3) Delivery behavior
 
 Webhook sending is asynchronous. Delivery is "at least once", so duplicates are possible.
