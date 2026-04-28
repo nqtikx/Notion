@@ -11,13 +11,6 @@ This page contains webhook requests sent by WhiteBird and expected merchant beha
 - Timeout: `15s` connect / `15s` read
 - Retries: up to `3` attempts with `1s` backoff on delivery failures
 
-## Idempotency Guidance (Merchant side)
-
-- Treat `id` as webhook event id.
-- Store processed ids in a dedup store (Redis/DB).
-- Recommended dedup window: at least `24h` (or your maximum replay window).
-- If duplicate `id` is received, return `2xx` and skip re-processing.
-
 ---
 
 ## Event Catalog
