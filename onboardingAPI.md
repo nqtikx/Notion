@@ -71,17 +71,53 @@ Creates or registers a client in registration/KYC flow.
 - `id` - registered `clientId`
 - `status` - current client status
 
-## 2. Field usage by flow
+### Request body example (with field groups)
 
-| Field | Register | Crypto-test POST | Agreed-offer POST | Status POST | Validate POST |
-|---|---|---|---|---|---|
-| `postCode` | Required (`@NotEmpty`) | Not used | Not used | Not used | Not used |
-| `notUSTaxPayer` | Optional bool | Optional bool | Optional bool | Not used | Not used |
-| `agreedWithOffer` | Optional bool | Optional bool | Optional bool | Not used | Not used |
+```json
+{
+  "//required": "DTO @NotEmpty fields",
+  "email": "user@example.com",
+  "phone": "+79990000000",
+  "gender": "жен",
+  "firstNameRu": "Анна",
+  "lastNameRu": "Иванова",
+  "patronymicRu": "Ивановна",
+  "firstName": "Anna",
+  "lastName": "Ivanova",
+  "placeOfBirth": "Moscow",
+  "nationality": "643",
+  "residence": "643",
+  "registrationCountry": "643",
+  "registrationRegion": "Moscow region",
+  "residenceDistrict": "-",
+  "registrationCity": "Moscow",
+  "registrationStreet": "Lenina",
+  "registrationHouseAndFlat": "1-1",
+  "identityDocType": "9",
+  "identityDocNumber": "1234567890",
+  "identityDocIssuer": "MVD",
+  "postCode": "101000",
+  "//optional": "DTO optional fields",
+  "birthDate": "1994-05-09",
+  "identityDocIssueDate": "2020-01-02",
+  "identityDocExpireDate": "2030-01-02",
+  "personalNumber": "1234567A123PB1",
+  "notUSTaxPayer": true,
+  "agreedWithOffer": true,
+  "exchangeInPersonalInterests": true,
+  "externalClientId": "partner-user-123"
+}
+```
 
-Notes:
-- `postCode` must be non-empty for register request validation.
-- `notUSTaxPayer` and `agreedWithOffer` are accepted in multiple flows and persist when sent as `true`.
+### Response body example
+
+```json
+{
+  "//required": "always present",
+  "id": "client-id",
+  "status": "PENDING"
+}
+```
 
 ## 3. Client status endpoint
 
@@ -95,6 +131,24 @@ Request:
 
 Response:
 - `String` (`ClientStatus`)
+
+### Request body example
+
+```json
+{
+  "//required": "request body",
+  "clientId": "client-id"
+}
+```
+
+### Response body example
+
+```json
+{
+  "//required": "plain string response body",
+  "value": "VERIFIED"
+}
+```
 
 ## 4. Crypto test endpoints
 
@@ -119,6 +173,29 @@ If client is not resident:
 }
 ```
 
+### GET response body example (resident)
+
+```json
+{
+  "//required": "always present",
+  "cryptoTestRequired": true,
+  "//optional": "present only when cryptoTestRequired = true",
+  "questions": [
+    {
+      "id": "1",
+      "title": "Question title",
+      "answers": [
+        {
+          "id": 11,
+          "title": "Answer title",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### POST `/api/v2/kyc/merchant/client/crypto-test`
 
 Request body:
@@ -132,7 +209,28 @@ Response:
 
 ```json
 {
+  "//required": "always present",
   "accepted": true
+}
+```
+
+### POST request body example (with field groups)
+
+```json
+{
+  "//required": "request body fields",
+  "clientId": "client-id",
+  "answers": {
+    "1": 11,
+    "2": 21,
+    "3": 31,
+    "4": 41,
+    "5": 51
+  },
+  "//optional": "business flags",
+  "exchangeInPersonalInterests": true,
+  "agreedWithOffer": true,
+  "notUSTaxPayer": true
 }
 ```
 
