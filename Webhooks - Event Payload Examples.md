@@ -19,7 +19,6 @@ The table below describes fields that are always present in outgoing payloads ge
 | `client.payment.method.failed` | `id`, `type`, `createdAt`, `clientId` | `bindId`, `cardMask`, `brand`, `providerType` |
 | `SUMSUB_STATUS_CHANGED` | `type`, `createdAt`, `clientId`, `processName` | `id` (always `null`), `levelType`, `reviewResult`, `actionId`, `linkId` |
 | `CLIENT_EMAIL_CHANGED` | `type`, `createdAt`, `clientId`, `email` | `id` (always `null`) |
-| `CRM_EVENT_PROCESSED` | `type`, `createdAt`, `clientId`, `topic` | `id` (always `null`); this type is currently not emitted by active sender flow |
 
 ## Client events
 
@@ -358,17 +357,5 @@ _Purpose:_ synchronize the updated email in merchant systems.
   "createdAt": "2025-04-27T16:10:00",
   "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
   "email": "new-email@example.com"
-}
-```
-
-### `CRM_EVENT_PROCESSED`
-_When sent:_ type is defined in code, but no active sender path is found in the current flow.  
-_Purpose:_ reserved/technical CRM webhook type.
-```json
-{
-  "type": "CRM_EVENT_PROCESSED",
-  "createdAt": "2025-04-27T16:10:00",
-  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
-  "topic": "crm-topic"
 }
 ```
