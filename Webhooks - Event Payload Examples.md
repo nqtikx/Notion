@@ -10,34 +10,6 @@ Each event example includes:
 
 ---
 
-## Common request headers
-
-```http
-Content-Type: application/json
-x-payload-digest: <hmac_sha1_hex_digest>
-```
-
----
-
-## Common merchant response
-
-Return `2xx` after successful acceptance.
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json
-```
-
-Optional response body:
-
-```json
-{
-  "ok": true
-}
-```
-
----
-
 ## Client events
 
 | Event | Purpose |
