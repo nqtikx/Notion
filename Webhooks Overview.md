@@ -87,13 +87,13 @@ Common fields are event-dependent.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `id` | `string \| null` | Webhook event ID |
+| `id` | `string` | Webhook event ID |
 | `type` | `string` | Event type |
 | `createdAt` | `string` | Event creation timestamp |
 | `clientId` | `string` | WhiteBird client ID |
 | `orderId` | `string` | WhiteBird order ID |
-| `sessionId` | `string \| null` | SDK session ID |
-| `externalClientId` | `string \| null` | Partner-side client ID |
+| `sessionId` | `string` | SDK session ID |
+| `externalClientId` | `string` | Partner-side client ID |
 | `bindId` | `string` | Payment method bind ID |
 | `paymentToken` | `string` | Tokenized payment method ID |
 | `providerType` | `string` | Payment provider type |
