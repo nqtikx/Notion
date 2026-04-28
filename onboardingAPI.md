@@ -16,6 +16,7 @@ Request authorization is performed through the **x-api-key** header. All request
 - **[Client status](#client-status)**
 - **[Crypto test (for BY users)](#crypto-test-requests)**
 - **[Token generation (for SDK)](#generate-tokens-request)**
+- **[Additional useful endpoints](#additional-useful-endpoints)**
 
 ### Register POST request
 
@@ -63,6 +64,24 @@ If the identity document does not contain registration address information, this
 - **externalClientId** - string, Optional - client identification number of the user in partner's system
 
 > Core KYC fields are required. Some fields are country-specific and validated according to backend rules.
+
+### Important field behavior by flow
+
+This section is aligned with `ClientManagementController` and `ClientValidationController` plus request DTO validation.
+
+| Field | `/merchant/client/register` | `/merchant/client/crypto-test` | `/merchant/client/agreed-offer` | `/merchant/client/status` | `/api/v1/kyc/client/validate` |
+|---|---|---|---|---|---|
+| `postCode` | Required (`@NotEmpty`) | Not used | Not used | Not used | Not used |
+| `notUSTaxPayer` | Optional business flag (primitive `boolean`, defaults to `false` if omitted) | Optional business flag in request body (primitive `boolean`) | Optional business flag in request body (primitive `boolean`) | Not used | Not used |
+| `agreedWithOffer` | Optional business flag (primitive `boolean`, defaults to `false` if omitted) | Optional business flag in request body (primitive `boolean`) | Main field of this endpoint | Not used | Not used |
+
+Notes:
+- `postCode` is technically mandatory for register request validation.  
+  For countries where classic postal code is not available in PID, partner still must pass a non-empty value (for example, `"-"`), otherwise request fails validation.
+- `notUSTaxPayer` and `agreedWithOffer` are not `@NotEmpty` and are not hard-required for initial registration, but they affect follow-up processing:
+  - in register flow, immediate WB CRM full update is scheduled only when all three are `true`: `agreedWithOffer`, `notUSTaxPayer`, `exchangeInPersonalInterests`;
+  - in crypto-test/agreed-offer flows, these flags are updated and then synced to WB CRM.
+- `ClientValidationController` (`/api/v1/kyc/client/validate`, `/confirm`) does not consume these fields at all; it works with status/confirmation timeline.
 
 #### Response:
 - **id** - string(255), registered clientId
@@ -143,12 +162,17 @@ Request to get the client’s current status. The only valid status for transact
 
 #### Params:
 - **clientId** - string(255)
+- **externalUserId** - string, optional (`request param`)
 #### Response:
 - **String** - ClientStatus
 
+Practical notes:
+- Endpoint is merchant-scoped (`x-api-key` required).
+- For integrations using external IDs, pass `externalUserId` to align access checks.
+
 ### Crypto test requests
 
-All users registered with Belarusian documents are required to pass the crypto test. This is a regulator requirement and cannot be bypassed. When using SDK, the test is built-in.
+All users registered as Belarus residents are required to pass the crypto test. This is a regulator requirement and cannot be bypassed. When using SDK, the test is built-in.
 
 The test consists of 5 simple questions. Use GET crypto-test to retrieve them, then send the user’s answers in POST crypto-test.
 
@@ -158,6 +182,15 @@ The test consists of 5 simple questions. Use GET crypto-test to retrieve them, t
 - **cryptoTestRequired** - bool, whether the user must pass the test
 - **questions** - TestQuestion[], questions with answer options
 
+Behavior:
+- If user is not resident, response is:
+```json
+{
+  "cryptoTestRequired": false
+}
+```
+- In this case `questions` is omitted.
+
 #### POST /api/v2/kyc/merchant/client/crypto-test
 
 #### Request:
@@ -166,6 +199,26 @@ The test consists of 5 simple questions. Use GET crypto-test to retrieve them, t
 - **agreedWithOffer** - bool
 - **notUSTaxPayer** - bool
 - **answers** - object, “questionId”(long): answerId(long)
+
+#### Response:
+- **accepted** - bool
+
+```json
+{
+  "accepted": true
+}
+```
+
+Behavior and validation details:
+- For non-resident clients service returns `{ "accepted": false }` and does not run answer validation.
+- For resident clients all 5 answers must be correct, otherwise request fails with validation error:
+  - `Wrong answers to crypto test`
+- Flags `exchangeInPersonalInterests`, `agreedWithOffer`, `notUSTaxPayer` are saved as positive flags when sent as `true`.
+- Passing crypto test updates KYC-side data and triggers sync to WB CRM; this is one of required steps before normal verified flow usage.
+
+Important about field usage in this flow:
+- `notUSTaxPayer` and `agreedWithOffer` are accepted both in register and in crypto-test endpoints.
+- They are not hard-required by DTO annotations, but they are operationally important for downstream processing.
 
 ### Generate tokens request
 
@@ -181,6 +234,52 @@ Not used in On/Off ramp API.
 #### Response:
 - **token** - string(unlimited)
 - **refreshToken** - string(unlimited)
+
+### Additional useful endpoints
+
+These endpoints are commonly used in production registration/KYC flow, but are often missed in initial integrations.
+
+#### Merchant API (`x-api-key`)
+
+1) **Get Sumsub token for SDK level**
+
+- `POST /api/v2/kyc/merchant/client/sumsub/token`
+- Request:
+  - `clientId` - string
+  - `levelType` - `SumsubLevelType`
+- Response:
+  - `token` - string
+  - `validTill` - datetime
+
+2) **Confirm agreed offer state**
+
+- `POST /api/v2/kyc/merchant/client/agreed-offer`
+- Request:
+  - `clientId` - string
+  - `exchangeInPersonalInterests` - bool
+  - `agreedWithOffer` - bool
+  - `notUSTaxPayer` - bool
+- Response: `"OK"`
+
+3) **Get personal number**
+
+- `POST /api/v2/kyc/merchant/client/personal-number`
+- Request:
+  - `clientId` - string
+- Response:
+  - `personalNumber` - string
+
+#### User API (Bearer token)
+
+1) **Validation status check**
+- `POST /api/v1/kyc/client/validate`
+
+2) **Confirm validation window**
+- `POST /api/v1/kyc/client/confirm`
+
+3) **ICO agreement endpoints**
+- `POST /api/v1/kyc/client/ico/agreement`
+- `POST /api/v1/kyc/client/ico/agreements`
 
 ### Simple register request
 
