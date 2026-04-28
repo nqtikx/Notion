@@ -1,333 +1,31 @@
 # Webhooks - Event Payload Examples
 
-This page contains webhook requests sent by WhiteBird and expected merchant behavior.
-
-## Delivery Contract
-
-- Method: `POST`
-- Content-Type: `application/json`
-- Signature header: `x-payload-digest`
-- Signature algorithm: `HMAC-SHA1` over raw request body bytes
-- Timeout: `15s` connect / `15s` read
-- Retries: up to `3` attempts with `1s` backoff on delivery failures
-
----
-
-## Event Catalog
-
-### Client events
-
-| Event | Purpose |
-|---|---|
-| `client.created` | New WhiteBird client is created |
-| `client.pending` | Client status changed to pending |
-| `client.verified` | Client status changed to verified |
-| `client.frozen` | Client status changed to frozen |
-
-### Order events
-
-| Event | Purpose |
-|---|---|
-| `order.processing` | Order created or entered processing |
-| `order.completed` | Order completed |
-| `order.expired` | Order expired |
-| `order.failed` | Order failed |
-| `order.error` | Legacy deprecated error event |
-
-### Input operation events
-
-| Event | Purpose |
-|---|---|
-| `order.operation.in.selected` | Input operation selected |
-| `order.operation.in.processing` | Input operation started |
-| `order.operation.in.completed` | Input operation completed |
-| `order.operation.in.failed` | Input operation failed |
-| `order.operation.in.expired` | Input operation expired |
-
-### Output operation events
-
-| Event | Purpose |
-|---|---|
-| `order.operation.out.selected` | Output operation selected |
-| `order.operation.out.processing` | Output operation started |
-| `order.operation.out.completed` | Output operation completed |
-| `order.operation.out.failed` | Output operation failed |
-| `order.operation.out.expired` | Output operation expired |
-
-### Payment method events
-
-| Event | Purpose |
-|---|---|
-| `client.payment.method.binding` | Payment method binding started |
-| `client.payment.method.bound` | Payment method bound successfully |
-| `client.payment.method.failed` | Payment method binding failed |
-
-### Additional events
-
-| Event | Purpose |
-|---|---|
-| `SUMSUB_STATUS_CHANGED` | Sumsub status update |
-| `CLIENT_EMAIL_CHANGED` | Client email changed |
-| `CRM_EVENT_PROCESSED` | CRM event processed |
-
----
-
-## JSON Schemas (required/optional)
-
-### 1) Client status events schema
-
-Applies to:
-`client.created`, `client.pending`, `client.verified`, `client.frozen`
-
-```json
-{
-  "type": "object",
-  "required": ["id", "type", "createdAt", "clientId"],
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 2) Order + operation events schema
-
-Applies to:
-`order.*`, `order.operation.in.*`, `order.operation.out.*`
-
-```json
-{
-  "type": "object",
-  "required": ["id", "type", "createdAt", "orderId"],
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "orderId": { "type": "string", "format": "uuid" },
-    "sessionId": { "type": ["string", "null"], "format": "uuid" },
-    "externalClientId": { "type": ["string", "null"] }
-  },
-  "additionalProperties": false
-}
-```
-
-### 3) Payment method binding schema
-
-`client.payment.method.binding`
-
-```json
-{
-  "type": "object",
-  "required": ["id", "type", "createdAt", "clientId", "bindId", "providerType"],
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string", "const": "client.payment.method.binding" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "bindId": { "type": "string", "format": "uuid" },
-    "providerType": { "type": "string" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 4) Payment method bound schema
-
-`client.payment.method.bound`
-
-```json
-{
-  "type": "object",
-  "required": ["id", "type", "createdAt", "clientId", "paymentToken", "providerType"],
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string", "const": "client.payment.method.bound" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "paymentToken": { "type": "string" },
-    "providerType": { "type": "string" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 5) Payment method failed schema
-
-`client.payment.method.failed`
-
-```json
-{
-  "type": "object",
-  "required": ["id", "type", "createdAt", "clientId", "bindId", "providerType"],
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string", "const": "client.payment.method.failed" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "bindId": { "type": "string", "format": "uuid" },
-    "cardMask": { "type": ["string", "null"] },
-    "brand": { "type": ["string", "null"] },
-    "providerType": { "type": "string" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 6) SUMSUB status changed schema
-
-`SUMSUB_STATUS_CHANGED`
-
-```json
-{
-  "type": "object",
-  "required": ["type", "createdAt", "clientId", "processName", "levelType", "reviewResult", "actionId"],
-  "properties": {
-    "type": { "type": "string", "const": "SUMSUB_STATUS_CHANGED" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "processName": { "type": "string" },
-    "levelType": { "type": "string" },
-    "reviewResult": { "type": "string" },
-    "actionId": { "type": "string" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 7) Client email changed schema
-
-`CLIENT_EMAIL_CHANGED`
-
-```json
-{
-  "type": "object",
-  "required": ["type", "createdAt", "clientId", "email"],
-  "properties": {
-    "type": { "type": "string", "const": "CLIENT_EMAIL_CHANGED" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "email": { "type": "string", "format": "email" }
-  },
-  "additionalProperties": false
-}
-```
-
-### 8) CRM event processed schema
-
-`CRM_EVENT_PROCESSED`
-
-```json
-{
-  "type": "object",
-  "required": ["type", "createdAt", "clientId", "topic"],
-  "properties": {
-    "type": { "type": "string", "const": "CRM_EVENT_PROCESSED" },
-    "createdAt": { "type": "string", "format": "date-time-like-local" },
-    "clientId": { "type": "string", "format": "uuid" },
-    "topic": { "type": "string" }
-  },
-  "additionalProperties": true
-}
-```
-
-> Note: implementation currently uses `type` both as event discriminator and as CRM payload field internally; API consumers should rely on `type=CRM_EVENT_PROCESSED` and `topic`.
-
----
-
-## Signature Verification Examples (`x-payload-digest`)
-
-Use raw HTTP body bytes exactly as received.
-
-### Node.js (crypto)
-
-```js
-import crypto from 'crypto';
-
-function verifySignature(rawBodyBuffer, signingSecret, receivedDigest) {
-  const expected = crypto
-    .createHmac('sha1', signingSecret)
-    .update(rawBodyBuffer)
-    .digest('hex');
-
-  const a = Buffer.from(expected, 'utf8');
-  const b = Buffer.from(receivedDigest || '', 'utf8');
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-}
-```
-
-### Java
-
-```java
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-
-public static boolean verify(byte[] rawBody, String secret, String receivedDigest) throws Exception {
-    Mac mac = Mac.getInstance("HmacSHA1");
-    mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA1"));
-    byte[] digestBytes = mac.doFinal(rawBody);
-    StringBuilder sb = new StringBuilder();
-    for (byte b : digestBytes) sb.append(String.format("%02x", b));
-    String expected = sb.toString();
-    return java.security.MessageDigest.isEqual(
-            expected.getBytes(StandardCharsets.UTF_8),
-            (receivedDigest == null ? "" : receivedDigest).getBytes(StandardCharsets.UTF_8)
-    );
-}
-```
-
-### Python
-
-```python
-import hmac
-import hashlib
-
-def verify_signature(raw_body: bytes, secret: str, received_digest: str | None) -> bool:
-    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha1).hexdigest()
-    return hmac.compare_digest(expected, received_digest or "")
-```
-
----
-
-## Failure / Retry Behavior
-
-### Bad signature example (merchant side)
-
-- Merchant verifies `x-payload-digest`.
-- If invalid, merchant returns `401` or `403`.
-- WhiteBird retries according to retry policy (up to 3 attempts total).
-
-Example response:
-
-```http
-HTTP/1.1 401 Unauthorized
-Content-Type: application/json
-
-{"error":"invalid signature"}
-```
-
-### 4xx / 5xx behavior
-
-- Any network failure or non-success delivery path is treated as failed send and retried.
-- Response body is stored (trimmed to 1000 chars) for diagnostics.
-- If all retries fail, webhook remains persisted with last failure code/message.
-
-### Retry sequence example
-
-1. Attempt #1 at `T0` -> fails (`500` or timeout)
-2. Attempt #2 at `T0 + 1s` -> fails
-3. Attempt #3 at `T0 + 2s` -> success or final failure
-
----
-
-## Minimal payload examples
+This page contains payload examples for every webhook type.
+
+For delivery/signature/retry rules, see:
+- [Webhooks](./Webhooks.md)
+
+## Required fields (from code)
+
+The table below describes fields that are always present in outgoing payloads generated by current code.
+
+| Event type | Always present fields | Optional / may be omitted (`null`) |
+|---|---|---|
+| `client.created`, `client.pending`, `client.verified`, `client.frozen` | `id`, `type`, `createdAt`, `clientId` | - |
+| `order.processing`, `order.completed`, `order.expired`, `order.error` | `id`, `type`, `createdAt`, `orderId` | `sessionId`, `externalClientId` |
+| `order.failed`, `order.operation.in.*`, `order.operation.out.*` | `id`, `type`, `createdAt`, `orderId` | `sessionId`, `externalClientId` |
+| `client.payment.method.binding` | `id`, `type`, `createdAt`, `clientId`, `bindId` | `providerType` |
+| `client.payment.method.bound` | `id`, `type`, `createdAt`, `clientId`, `paymentToken` | `providerType` |
+| `client.payment.method.failed` | `id`, `type`, `createdAt`, `clientId` | `bindId`, `cardMask`, `brand`, `providerType` |
+| `SUMSUB_STATUS_CHANGED` | `type`, `createdAt`, `clientId`, `processName` | `id` (always `null`), `levelType`, `reviewResult`, `actionId`, `linkId` |
+| `CLIENT_EMAIL_CHANGED` | `type`, `createdAt`, `clientId`, `email` | `id` (always `null`) |
+| `CRM_EVENT_PROCESSED` | `type`, `createdAt`, `clientId`, `topic` | `id` (always `null`) |
+
+## Client events
 
 ### `client.created`
-
+_When sent:_ after client registration (`ClientRegisteredMessage`).  
+_Purpose:_ notify the merchant that a new client was created.
 ```json
 {
   "id": "webhook-id",
@@ -337,21 +35,291 @@ Content-Type: application/json
 }
 ```
 
-### `order.failed`
+### `client.pending`
+_When sent:_ when client status changes to `PENDING` (`ClientStatusUpdatedMessage`).  
+_Purpose:_ notify that the client moved to pending verification.
+```json
+{
+  "id": "webhook-id",
+  "type": "client.pending",
+  "createdAt": "2024-05-23T08:30:21",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
 
+### `client.verified`
+_When sent:_ when client status changes to `VERIFIED` (`ClientStatusUpdatedMessage`).  
+_Purpose:_ notify that the client was successfully verified.
+```json
+{
+  "id": "webhook-id",
+  "type": "client.verified",
+  "createdAt": "2024-05-23T08:30:21",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+### `client.frozen`
+_When sent:_ when client status changes to `FROZEN` (`ClientStatusUpdatedMessage`).  
+_Purpose:_ notify that the client was frozen.
+```json
+{
+  "id": "webhook-id",
+  "type": "client.frozen",
+  "createdAt": "2024-05-23T08:30:21",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+## Order events
+
+### `order.processing`
+_When sent:_ when an order is created (v1 `OrderRegisteredMessage`) and on v2 events with order status `PROCESSING`.  
+_Purpose:_ notify that order processing has started.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.processing",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.completed`
+_When sent:_ when an order reaches final success status (`CONFIRMED` for v1 / `COMPLETED` for v2).  
+_Purpose:_ notify that the order was completed successfully.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.completed",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.expired`
+_When sent:_ when an order transitions to `EXPIRED`.  
+_Purpose:_ notify that the order expired.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.expired",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.failed`
+_When sent:_ for v2 orders with status `FAILED` (`OrderV2EventMessage`).  
+_Purpose:_ notify about unsuccessful order completion in the current flow.
 ```json
 {
   "id": "webhook-id",
   "type": "order.failed",
   "createdAt": "2024-05-23T08:44:58",
   "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
-  "sessionId": null,
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
   "externalClientId": "external-client-id-5"
 }
 ```
 
-### `client.payment.method.failed`
+### `order.error` (legacy)
+_When sent:_ legacy v1 event for statuses `DECLINED` / `REJECTED` / `ARREST` (`OrderStatusChangedMessage`).  
+_Purpose:_ backward compatibility with the legacy error model.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.error",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
 
+## Input operation events
+
+### `order.operation.in.selected`
+_When sent:_ on v2 input operation event with status `selected`.  
+_Purpose:_ notify that an input operation was selected for execution.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.in.selected",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.in.processing`
+_When sent:_ on v2 input operation event with status `processing`.  
+_Purpose:_ notify that an input operation is in progress.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.in.processing",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.in.completed`
+_When sent:_ on v2 input operation event with status `completed`.  
+_Purpose:_ notify that an input operation completed successfully.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.in.completed",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.in.failed`
+_When sent:_ on v2 input operation event with status `failed`.  
+_Purpose:_ notify that an input operation failed.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.in.failed",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.in.expired`
+_When sent:_ on v2 input operation event with status `expired`.  
+_Purpose:_ notify that an input operation expired.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.in.expired",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+## Output operation events
+
+### `order.operation.out.selected`
+_When sent:_ on v2 output operation event with status `selected`.  
+_Purpose:_ notify that an output operation was selected for execution.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.out.selected",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.out.processing`
+_When sent:_ on v2 output operation event with status `processing`.  
+_Purpose:_ notify that an output operation is in progress.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.out.processing",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.out.completed`
+_When sent:_ on v2 output operation event with status `completed`.  
+_Purpose:_ notify that an output operation completed successfully.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.out.completed",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.out.failed`
+_When sent:_ on v2 output operation event with status `failed`.  
+_Purpose:_ notify that an output operation failed.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.out.failed",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+### `order.operation.out.expired`
+_When sent:_ on v2 output operation event with status `expired`.  
+_Purpose:_ notify that an output operation expired.
+```json
+{
+  "id": "webhook-id",
+  "type": "order.operation.out.expired",
+  "createdAt": "2024-05-23T08:44:58",
+  "orderId": "3c0130a4-06f2-4d18-bf39-27153caff6f5",
+  "sessionId": "29c4af26-b419-4de9-9fb6-a9824227985f",
+  "externalClientId": "external-client-id-5"
+}
+```
+
+## Payment method events
+
+### `client.payment.method.binding`
+_When sent:_ when payment method binding starts (`ClientPaymentMethodBindingMessage`).  
+_Purpose:_ notify that card/payment method binding has started.
+```json
+{
+  "id": "webhook-id",
+  "type": "client.payment.method.binding",
+  "createdAt": "2025-04-21T09:00:17",
+  "clientId": "ed8ff528-3017-45bc-9d4d-f90e58f91bf9",
+  "bindId": "856c460d-7081-433b-904d-c46e313b1225",
+  "providerType": "ASSIST"
+}
+```
+
+### `client.payment.method.bound`
+_When sent:_ when payment method binding is completed successfully (`ClientPaymentMethodBoundMessage`).  
+_Purpose:_ deliver successful binding result and `paymentToken`.
+```json
+{
+  "id": "webhook-id",
+  "type": "client.payment.method.bound",
+  "createdAt": "2025-04-21T13:51:26",
+  "clientId": "ed8ff528-3017-45bc-9d4d-f90e58f91bf9",
+  "paymentToken": "7ee5900d-7a02-4bcf-a757-7a7b2fce462d",
+  "providerType": "ASSIST"
+}
+```
+
+### `client.payment.method.failed`
+_When sent:_ when payment method binding fails (`ClientPaymentMethodFailedMessage`).  
+_Purpose:_ notify about binding failure with card/provider diagnostic fields.
 ```json
 {
   "id": "webhook-id",
@@ -365,8 +333,11 @@ Content-Type: application/json
 }
 ```
 
-### `SUMSUB_STATUS_CHANGED`
+## Additional events used in code
 
+### `SUMSUB_STATUS_CHANGED`
+_When sent:_ after processing an incoming Sumsub webhook (`SumsubWebhookProcessedMessage`).  
+_Purpose:_ deliver KYC/AML review result to merchant systems.
 ```json
 {
   "type": "SUMSUB_STATUS_CHANGED",
@@ -375,6 +346,31 @@ Content-Type: application/json
   "processName": "applicantReviewed",
   "levelType": "KYC",
   "reviewResult": "GREEN",
-  "actionId": "sumsub-action-id"
+  "actionId": "sumsub-action-id",
+  "linkId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
+}
+```
+
+### `CLIENT_EMAIL_CHANGED`
+_When sent:_ when client email is changed (`ClientEmailChangedMessage`).  
+_Purpose:_ synchronize the updated email in merchant systems.
+```json
+{
+  "type": "CLIENT_EMAIL_CHANGED",
+  "createdAt": "2025-04-27T16:10:00",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "email": "new-email@example.com"
+}
+```
+
+### `CRM_EVENT_PROCESSED`
+_When sent:_ when a client CRM event is processed (internal CRM pipeline).  
+_Purpose:_ notify external systems that the CRM event has been processed.
+```json
+{
+  "type": "CRM_EVENT_PROCESSED",
+  "createdAt": "2025-04-27T16:10:00",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "topic": "crm-topic"
 }
 ```
