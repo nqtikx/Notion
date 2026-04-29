@@ -1,12 +1,5 @@
 # Session API
 
-<aside>
-🛠
-
-Base URL for test environment: `https://api.dev.wbdevel.net/`
-
-</aside>
-
 ## What Session API is for
 
 Session API creates a pre-calculated exchange session for SDK flow and returns:
