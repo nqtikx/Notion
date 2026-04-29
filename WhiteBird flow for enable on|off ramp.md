@@ -84,90 +84,7 @@ Expected success:
 }
 ```
 
-## 3) KYC progression via Sumsub/CRM events
-
-### 3.1 Sumsub webhook events (local test sequence)
-
-Endpoint:
-
-`POST http://localhost:8088/api/v1/kyc/sumsub/event`
-
-Headers:
-
-- `Content-Type: application/json`
-- `x-payload-digest: ...` (required outside local profile)
-
-Send in this order:
-
-1. `applicantCreated`
-2. `applicantPending`
-3. `applicantReviewed`
-
-Bodies:
-
-```json
-{
-  "type": "applicantCreated",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation"
-}
-```
-
-```json
-{
-  "type": "applicantPending",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation"
-}
-```
-
-```json
-{
-  "type": "applicantReviewed",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation",
-  "reviewResult": {}
-}
-```
-
-Response from Sumsub webhook handler:
-
-```json
-{
-  "status": "OK"
-}
-```
-
-### 3.2 CRM sync step
-
-Your current test flow uses:
-
-`POST http://localhost:8088/api/v1/crm/sync`
-
-```json
-[
-  {
-    "status": "Verified",
-    "residence": "false",
-    "group": "false",
-    "identity": ""
-  }
-]
-```
-
-Important code note:
-
-- In current `kyc-service` source, direct REST controller for `/api/v1/crm/sync` was not found.
-- CRM sync processing is implemented via `CrmSyncProcessor` listener (`UPDATE_PROFILE_STATUS_QUEUE_NAME`).
-- Keep this HTTP step only if your local environment exposes it via another module/gateway/mock.
-
-## 4) Poll client status until ready
+## 3) Poll client status until ready
 
 Endpoint:
 
@@ -184,7 +101,7 @@ Ready state for exchange operations:
 - status is `VERIFIED`
 - required crypto test is completed (when applicable)
 
-## 5) Payment binding and operation context before first exchange
+## 4) Payment binding and operation context before first exchange
 
 1. Get providers  
    `POST {{URL}}/api/v2/exchange/merchant/payment/provider`
@@ -195,7 +112,7 @@ Ready state for exchange operations:
 
 Then proceed to quote/order flow for OnRamp or OffRamp.
 
-## 6) What is validated by WhiteBird during order creation
+## 5) What is validated by WhiteBird during order creation
 
 Core checks in exchange validation include:
 
@@ -205,8 +122,3 @@ Core checks in exchange validation include:
 - active order/deposit/withdrawal restrictions
 - payment provider/token validity when required
 - limits, balances, route availability, address checks
-
-Note on MFA:
-
-- MFA check is enforced in v3 order flow for deposit/withdrawal scenarios.
-- In legacy v2 buy/sell flow, MFA is not universally enforced for every case.
