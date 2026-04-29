@@ -20,7 +20,7 @@ The document is focused on:
 
 - [1. Base principles](#1-base-principles)
 - [2. OnRamp (fiat -> crypto) — Merchant API](./V2.md)
-- [3. OffRamp (crypto -> fiat) — Merchant API](./V2.md)
+- [3. OffRamp (crypto -> fiat) — Merchant API](./V2.md#3-offramp-crypto---fiat--merchant-api)
 - [4. Errors and status routing](#4-errors-and-status-routing-v2-onramp--offramp)
 - [5. Webhooks and callbacks](./Webhooks%20Overview.md)
 
