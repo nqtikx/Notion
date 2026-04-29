@@ -99,22 +99,10 @@ Webhook sending is asynchronous. Delivery is "at least once", so duplicates are 
 | Timeouts | 15s connect / 15s read |
 | Delivery log | Response code, response message, and last send timestamp are stored |
 
-### Recommended processing flow on merchant side
-
-1. Verify signature (`x-payload-digest`).
-2. Extract `id` from payload.
-3. Check dedup storage (Redis/DB) by `id`.
-4. If already processed: return `200 OK`.
-5. If new: run business logic once, save `id` as processed, return `200 OK`.
-
 ### What triggers retries
 
 - Exceptions matching `RestClientException` retry policy.
 - This includes network/connect/read failures and `RestClientResponseException`.
-
-### What does not trigger retries (in normal flow)
-
-- Requests completed without `RestClientException`.
 
 ---
 
