@@ -181,7 +181,7 @@ Example:
 ```json
 {
   "asset": "RUB",
-  "paymentMethod": "CARUSELL",
+  "paymentMethod": "CARUSELL"
 }
 ```
 
@@ -215,7 +215,7 @@ Example:
 
 ---
 
-## `GET /api/v3/exchange/merchant/oreder/current`
+## `GET /api/v3/exchange/merchant/order/current`
 
 ### Headers
 
@@ -227,8 +227,8 @@ Example:
 
 | Param | Required | Description |
 | --- | --- | --- |
-| `externalClientId` | ❌ | External client id (alternative to `clientId`) |
-| `clientId` | ❌ | Client id (alternative to `externalClientId`) |
+| `externalClientId` | ✅ | External client id (alternative to `clientId`) |
+| `clientId` | ✅ | Client id (alternative to `externalClientId`) |
 
 ### Response
 
@@ -266,7 +266,7 @@ Example:
 
 ---
 
-## `POST /api/v3/exchange/merchant/oreder/history`
+## `POST /api/v3/exchange/merchant/order/history`
 
 ### Headers
 
@@ -281,7 +281,7 @@ Example:
 | --- | --- | --- | --- |
 | `externalClientId` | string | ❌ | External client id |
 | `sessionIds` | UUID[] | ❌ | Filter by session ids |
-| `clientIds` / `clientId` | string[] / string | ❌ | Alternative client filter |
+| `clientIds` / `clientId` | string[] / string | ✅ | Alternative client filter |
 | `statuses` | string[] | ❌ | Order status filter |
 | `creationDateFrame` | object | ❌ | Creation date filter |
 
