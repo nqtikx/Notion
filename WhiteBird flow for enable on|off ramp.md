@@ -1,8 +1,7 @@
 # WhiteBird flow for enable OnRamp/OffRamp
 
-## Goal
-
-Step-by-step flow from client registration to first OnRamp/OffRamp operation, with concrete request bodies.
+This document is a practical end-to-end guide for partner backend teams.  
+It explains the exact sequence required to make OnRamp/OffRamp available for a client: full registration, KYC completion, crypto test (when required), payment method/card binding, and final readiness checks before creating quote/order requests.
 
 ## 1) Register client with full KYC data
 
