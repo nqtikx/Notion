@@ -94,84 +94,7 @@ Expected success:
 }
 ```
 
-## 3) KYC progression events (local test flow)
-
-### 3.1 Sumsub webhook events
-
-Endpoint:
-
-`POST http://localhost:8088/api/v1/kyc/sumsub/event`
-
-Send in this order:
-
-1) applicantCreated
-
-```json
-{
-  "type": "applicantCreated",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation"
-}
-```
-
-2) applicantPending
-
-```json
-{
-  "type": "applicantPending",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation"
-}
-```
-
-3) applicantReviewed
-
-```json
-{
-  "type": "applicantReviewed",
-  "applicantId": "",
-  "externalUserId": "",
-  "inspectionId": "test-inspection",
-  "correlationId": "test-correlation",
-  "reviewResult": {}
-}
-```
-
-Expected webhook response:
-
-```json
-{
-  "status": "OK"
-}
-```
-
-### 3.2 CRM sync step (environment-dependent)
-
-Your local flow uses:
-
-`POST http://localhost:8088/api/v1/crm/sync`
-
-```json
-[
-  {
-    "status": "Verified",
-    "residence": "false",
-    "group": "false",
-    "identity": ""
-  }
-]
-```
-
-Code note:
-
-- `CrmSyncProcessor` exists in `kyc-service`, but direct REST controller for `/api/v1/crm/sync` is not present in current source.
-- Keep this step if your environment exposes this endpoint via gateway/mock/another service.
-
-## 4) Poll final KYC status
+## 3) Poll final KYC status
 
 Endpoint:
 
@@ -185,9 +108,9 @@ Endpoint:
 
 Ready for exchange when status becomes `VERIFIED`.
 
-## 5) Prepare payment context (card or account/token)
+## 4) Prepare payment context (card or account/token)
 
-### 5.1 First step: check payment provider availability
+### 4.1 First step: check payment provider availability
 
 `POST {{URL}}/api/v2/exchange/merchant/payment/provider`
 
@@ -253,7 +176,7 @@ Response (actual endpoint returns an array):
 ]
 ```
 
-### 5.2 Second step: generate link to bind client card
+### 4.2 Second step: generate link to bind client card
 
 `POST {{URL}}/api/v2/exchange/merchant/payment/card/bind`
 
@@ -279,7 +202,7 @@ Response:
 }
 ```
 
-### 5.3 Third step: open link and complete card binding flow
+### 4.3 Third step: open link and complete card binding flow
 
 Open `url` from step 2 for the client.
 
@@ -291,7 +214,7 @@ Test card data:
 
 After successful card binding, client is redirected to `returnUrl`.
 
-### 5.4 How to get card binding result
+### 4.4 How to get card binding result
 
 Use WhiteBird webhooks or call payment methods API.
 
@@ -340,7 +263,7 @@ Webhook events:
 
 If card binding is successful, use `paymentToken` from `client.payment.method.bound`.
 
-### 5.5 Fourth step: get payment methods/tokens for operations
+### 4.5 Fourth step: get payment methods/tokens for operations
 
 `POST {{URL}}/api/v2/exchange/merchant/payment/method`
 
@@ -354,7 +277,7 @@ If card binding is successful, use `paymentToken` from `client.payment.method.bo
 
 After bind redirect flow finishes, call `/payment/method` again and use returned `id` as payment token.
 
-## 6) What is still required to enable first OnRamp/OffRamp
+## 5) What is still required to enable first OnRamp/OffRamp
 
 In practice, after KYC is `VERIFIED`, the remaining setup is:
 
@@ -365,7 +288,7 @@ In practice, after KYC is `VERIFIED`, the remaining setup is:
 
 No separate merchant API endpoint for "create current account" was found in `exchange-core` merchant exchange API.
 
-## 7) WhiteBird runtime validations during order creation
+## 6) WhiteBird runtime validations during order creation
 
 Main checks include:
 
