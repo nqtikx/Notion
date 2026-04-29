@@ -14,7 +14,6 @@ All requests are authorized with the `x-api-key` header.
 |---|---|---|
 | Full KYC registration | `POST /api/v2/kyc/merchant/client/register` | Partner sends complete user KYC/PID data to WhiteBird |
 | Client status check | `POST /api/v2/kyc/merchant/client/status` | Partner checks whether the client is allowed to transact |
-| Sumsub token for KYC process | `POST /api/v2/kyc/merchant/client/sumsub/token` | Partner receives temporary Sumsub access token for selected level |
 | Crypto test for BY residents | `GET /api/v2/kyc/merchant/client/crypto-test` -> `POST /api/v2/kyc/merchant/client/crypto-test` | Endpoint returns test questions for residents that require crypto test |
 | SDK light registration | `POST /api/v2/auth/merchant/client/register` | Partner creates a client without full KYC data |
 | SDK token generation | `POST /api/v2/auth/merchant/client/token/generate` | Partner receives SDK access tokens for a registered client |
@@ -216,45 +215,7 @@ Returns current client status.
 "VERIFIED"
 ```
 
-## 3. Sumsub token for KYC process
-
-### `POST /api/v2/kyc/merchant/client/sumsub/token`
-
-Returns a temporary Sumsub access token for selected KYC level.
-
-### Request fields
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `clientId` | `string` | Yes | WhiteBird client id |
-| `levelType` | `SumsubLevelType` | Yes | Sumsub level type: `MAIN` or `LIVENESS` |
-
-### Request example
-
-```json
-{
-  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
-  "levelType": "MAIN"
-}
-```
-
-### Response fields
-
-| Field | Type | Description |
-|---|---|---|
-| `token` | `string` | Temporary Sumsub access token |
-| `validTill` | `string` | Token expiration timestamp |
-
-### Response example
-
-```json
-{
-  "token": "sumsub-access-token",
-  "validTill": "2026-04-28T17:45:00"
-}
-```
-
-## 4. Crypto test
+## 3. Crypto test
 
 For non-resident clients this flow returns `cryptoTestRequired=false` and does not update test answers.
 
@@ -354,7 +315,7 @@ Submits answers to the crypto test.
 - If the client is not a Belarus resident, response is `{ "accepted": false }` and no test update is needed.
 - Wrong answers cause validation error: `Wrong answers to crypto test`.
 
-## 5. SDK light registration
+## 4. SDK light registration
 
 ### `POST /api/v2/auth/merchant/client/register`
 
@@ -390,7 +351,7 @@ Registers a merchant client without sending full KYC data.
 }
 ```
 
-## 6. SDK token generation
+## 5. SDK token generation
 
 ### `POST /api/v2/auth/merchant/client/token/generate`
 
@@ -428,7 +389,7 @@ Generates access tokens for merchant client.
 }
 ```
 
-## 7. Optional KYC support endpoints
+## 6. Optional KYC support endpoints
 
 ### `POST /api/v2/kyc/merchant/client/agreed-offer`
 
