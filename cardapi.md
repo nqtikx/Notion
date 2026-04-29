@@ -21,7 +21,7 @@ All merchant requests are Backend-to-Backend and authorized with header:
 
 `POST /api/v2/exchange/merchant/payment/provider`
 
-Request body (`clientId` is optional; filters are optional):
+Request body:
 
 ```json
 {
@@ -84,13 +84,15 @@ Notes:
 
 `POST /api/v2/exchange/merchant/payment/card/bind`
 
+`returnUrl` - Link to the resource where the client should be redirected after binding the card 
+
 Request body:
 
 ```json
 {
   "clientId": "1a0e2c64-8a90-4144-ac05-5e66bde1ca84",
   "providerType": "ASSIST",
-  "returnUrl": "https://your-app.example/bind-result"
+  "returnUrl": ""
 }
 ```
 
@@ -156,7 +158,7 @@ You can track result in two ways:
 }
 ```
 
-Use `paymentToken` from `client.payment.method.bound` as payment method token for exchange.
+If the client has successfully bound their card, you can get the card id in Whitebird as the paymentToken value
 
 #### Polling endpoints (optional)
 
@@ -166,7 +168,7 @@ Use `paymentToken` from `client.payment.method.bound` as payment method token fo
 ```json
 {
   "providerTypes": ["ASSIST"],
-  "statuses": ["BOUND", "FAILED"]
+  "statuses": ["BOUND", "FAILED", "BINDING"]
 }
 ```
 
@@ -176,7 +178,7 @@ Use `paymentToken` from `client.payment.method.bound` as payment method token fo
 
 `POST /api/v2/exchange/merchant/payment/method`
 
-Request body (`fiatAsset`, `orderType`, `destination`, `providers`, `isCrypto`, `countryGroup` are optional filters):
+Request body:
 
 ```json
 {
@@ -191,18 +193,16 @@ Response:
 ```json
 [
   {
-    "id": "ee6693e1-c340-47cb-8b9e-29304b6d9fd8",
-    "number": "**** **** **** 1111",
-    "brand": "VISA",
-    "providerId": "ASSIST",
-    "providerType": "ASSIST",
-    "status": "ENABLED",
-    "isRestricted": false,
-    "isCrypto": false,
-    "country": "Russia",
-    "currency": "BYN",
-    "supportedCurrencies": ["BYN", "RUB"]
-  }
+        "id": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "number": "**** **** **** 1111",
+        "brand": "VISA",
+        "providerId": "ASSIST",
+        "providerType": "ASSIST",
+        "status": "ENABLED",
+        "isRestricted": false,
+        "isCrypto": false,
+        "country": "Russia"
+    },
 ]
 ```
 
