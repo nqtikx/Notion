@@ -227,8 +227,8 @@ Example:
 
 | Param | Required | Description |
 | --- | --- | --- |
-| `externalClientId` | ✅ Yes | External client id (alternative to `clientId`) |
-| `clientId` | ✅ Yes | Client id (alternative to `externalClientId`) |
+| `externalClientId` | ⚠️ Conditionally required (required if externalClientId is not provided) | External client id (alternative to `clientId`) |
+| `clientId` | ⚠️ Conditionally required (required if сlientId is not provided) | Client id (alternative to `externalClientId`) |
 
 ### Response
 
