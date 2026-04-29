@@ -1,4 +1,4 @@
-# Errors and Status Routing (V2 OnRamp / OffRamp)
+## Errors and Status Routing (V2 OnRamp / OffRamp)
 
 This section lists practical error responses for V2 merchant exchange flow endpoints:
 - `/api/v2/exchange/merchant/assets`
