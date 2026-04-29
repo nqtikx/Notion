@@ -457,10 +457,6 @@ interface TestAnswer {
   correct: boolean;
 }
 
-enum SumsubLevelType {
-  MAIN = "MAIN",
-  LIVENESS = "LIVENESS"
-}
 ```
 
 ## Common validation errors
