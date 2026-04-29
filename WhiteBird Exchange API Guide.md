@@ -57,7 +57,7 @@ Core statuses used by exchange routing:
 
 ## 2. [OnRamp (fiat -> crypto) — Merchant API](./V2.md)
 
-## 3. [OffRamp (crypto -> fiat) — Merchant API](./V2.md)
+## 3. [OffRamp (crypto -> fiat) — Merchant API](./V2.md#3-offramp-crypto---fiat--merchant-api)
 
 ## 4. [Errors and Status Routing (V2 OnRamp / OffRamp)](./Errors%20and%20Status%20Routing.md)
 
