@@ -25,7 +25,7 @@ Creates an  session for fiat ↔ crypto or crypto ↔ fiat operations and return
 	"fromAsset":"BYN",
 	"fromAmount":100,
 	"toAsset":"USDT_TRC",
-	"destinationCryptoAddress":"TYPAe4vUYtUAKgrRt7iUc2fLuVhRHfCiJG",
+	"destinationCryptoAddress":"TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
 	"externalClientId":"externalClientId",
 }
 ```
@@ -139,8 +139,8 @@ Request example:
 ```json
 {
     "sessionId": "14500600-0631-46c4-9ae1-fab9e4c798f8",
-    "externalClientId": "external-client-id-2",
-    "destinationCryptoAddress": "TYPAe4vUYtUAKgrRt7iUc2fLuVhRHfCiJG",
+    "externalClientId": "external-client-id-2", 
+    "destinationCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
     "comment": null,
     "exchange": {
         "fromAsset": "USD",
@@ -247,56 +247,3 @@ Triggered when the order fails.
 
 ---
 
-## How fee is calculated in Session API
-
-Session API returns `exchange.fees` from calculation adjustments.  
-Each fee item has:
-
-- `type`: `PERCENT` or `CRYPTO_FEE`
-- `amount`: negative adjustment amount
-- `asset`: asset side where this adjustment was applied (`fromAsset` or `toAsset`)
-
-### Core formulas from code
-
-- Percent fee:
-  - `fee = amount * percent / 100`
-- Reverse percent fee (when target amount is fixed):
-  - `fee = amount / (1 - percent / 100) - amount`
-
-Where:
-
-- `amount` is current amount on current calculation step;
-- `percent` is configured percent value (for example `2.5` means `2.5%`).
-
-### How total fee is composed
-
-Fee groups in calculation:
-
-- `PAYMENT` fee (processor/network side)
-- `EXCHANGE` fee (exchange service side)
-
-Totals are derived as:
-
-- `fromFeeAmount = fromPaymentFeeAmount + fromExchangeFeeAmount`
-- `toFeeAmount = toPaymentFeeAmount + toExchangeFeeAmount`
-
-And components:
-
-- `fromPaymentFeeAmount` / `toPaymentFeeAmount` are payment-group fees
-- `fromExchangeFeeAmount` / `toExchangeFeeAmount` are exchange-group fees
-
-### Crypto fee specifics
-
-For `CRYPTO_FEE`:
-
-- fee amount is requested from crypto fee provider (`CryptoFeeService`);
-- if fee asset differs from operation asset, it is converted by system exchange rate;
-- returned adjustment is still stored as negative amount in `exchange.fees`.
-
-### Variables quick dictionary
-
-- `fromGrossAmount`: source amount before deductions
-- `fromNetAmount`: source amount after input-side fees
-- `toGrossAmount`: amount before output-side deductions
-- `toNetAmount`: final target amount after output-side fees
-- `exchange.fees[]`: list of fee adjustments included in session preview
