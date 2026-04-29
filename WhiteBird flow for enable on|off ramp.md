@@ -267,6 +267,8 @@ If card binding is successful, use `paymentToken` from `client.payment.method.bo
 
 `POST {{URL}}/api/v2/exchange/merchant/payment/method`
 
+Request Body:
+
 ```json
 {
   "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
@@ -275,6 +277,23 @@ If card binding is successful, use `paymentToken` from `client.payment.method.bo
 }
 ```
 
+Response: 
+
+```json
+[
+    {
+        "id": "ee6693e1-c340-47cb-8b9e-29304b6d9fd8",
+        "number": "**** **** **** 1111",
+        "brand": "VISA",
+        "providerId": "ASSIST",
+        "providerType": "ASSIST",
+        "status": "ENABLED",
+        "isRestricted": false,
+        "isCrypto": false,
+        "country": "Russia"
+    }
+]
+```
 After bind redirect flow finishes, call `/payment/method` again and use returned `id` as payment token.
 
 ## 5) What is still required to enable first OnRamp/OffRamp
