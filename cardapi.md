@@ -52,7 +52,15 @@ Response (array):
                   "currency": "BYN",
                   "countries": [
                     "Belarus",
-                    "Azerbaijan"
+                    "Azerbaijan",
+                    "Armenia",
+                    "Kazakhstan",
+                    "Kyrgyzstan",
+                    "Moldova",
+                    "Tajikistan",
+                    "Turkmenistan",
+                    "Uzbekistan",
+                    "Georgia"
                   ]
                 }
               ]
