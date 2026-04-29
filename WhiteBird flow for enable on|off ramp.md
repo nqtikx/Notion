@@ -2,7 +2,7 @@
 
 ## Goal
 
-This document describes a practical activation flow to bring a client from registration to a state where merchant OnRamp/OffRamp operations can be executed.
+Step-by-step flow from client registration to first OnRamp/OffRamp operation, with concrete request bodies.
 
 ## 1) Register client with full KYC data
 
@@ -10,54 +10,64 @@ This document describes a practical activation flow to bring a client from regis
 
 `POST {{URL}}/api/v2/kyc/merchant/client/register`
 
-### Request body (actual structure used in current flow)
+### Headers
+
+- `x-api-key: <merchant-api-key>`
+- `Content-Type: application/json`
+
+### Request body (test example)
 
 ```json
 {
-  "email": "{{email}}",
-  "firstNameRu": "{{firstNameRu}}",
-  "lastNameRu": "{{lastNameRu}}",
-  "patronymicRu": "{{patronymicRu}}",
-  "firstName": "{{firstName}}",
-  "lastName": "{{lastName}}",
+  "email": "test.user.testov+29042026a@ya.ru",
+  "firstNameRu": "Кирилл",
+  "lastNameRu": "Воронцов",
+  "patronymicRu": "Михайлович",
+  "firstName": "Kirill",
+  "lastName": "Vorontsov",
   "residence": "112",
-  "placeOfBirth": "{{placeOfBirth}}",
-  "birthDate": "{{birthDate}}",
+  "placeOfBirth": "Республика Беларусь, г. Минск",
+  "birthDate": "1992-07-17",
   "nationality": "112",
   "registrationCountry": "112",
-  "registrationRegion": "{{registrationRegion}}",
-  "registrationCity": "{{registrationCity}}",
-  "registrationStreet": "{{registrationStreet}}",
-  "registrationHouseAndFlat": "{{registrationHouseAndFlat}}",
+  "registrationRegion": "Минская область",
+  "registrationCity": "Минск",
+  "registrationStreet": "Улица Примерная",
+  "registrationHouseAndFlat": "10-15",
   "identityDocType": "3",
-  "identityDocIssueDate": "{{identityDocIssueDate}}",
-  "identityDocExpireDate": "{{identityDocExpireDate}}",
-  "identityDocNumber": "{{identityDocNumber}}",
-  "personalNumber": "{{personalNumber}}",
-  "postCode": "{{postCode}}",
-  "phone": "{{phone}}",
-  "gender": "{{gender}}",
-  "residenceDistrict": "{{residenceDistrict}}",
-  "identityDocIssuer": "{{identityDocIssuer}}",
+  "identityDocIssueDate": "2024-01-14",
+  "identityDocExpireDate": "2075-08-20",
+  "identityDocNumber": "DP9735284",
+  "personalNumber": "1084110P146PB7",
+  "postCode": "781609",
+  "phone": "+375293863256",
+  "gender": "муж",
+  "residenceDistrict": "Ленинский",
+  "identityDocIssuer": "ОВД Ленинского района г. Минска",
   "exchangeInPersonalInterests": true,
   "notUSTaxPayer": true,
   "agreedWithOffer": true
 }
 ```
 
-### Notes
+### Expected response
 
-- Keep URL format with slash after host: `{{URL}}/api/...`.
-- In current DTO (`RegisterClientRequest`) `residence` is `String`, not boolean.
-- Save `id` from response as `clientId` for all next steps.
+```json
+{
+  "id": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "status": "PENDING"
+}
+```
 
-## 2) If residence/nationality is Belarus (`112`) -> complete crypto test
+Save `id` as `clientId`.
 
-### 2.1 Get questions
+## 2) If client is `112` (Belarus) -> complete crypto test
+
+### 2.1 Get test
 
 `GET {{URL}}/api/v2/kyc/merchant/client/crypto-test?clientId={{clientId}}`
 
-If response has `"cryptoTestRequired": true`, continue with submit.
+If response contains `"cryptoTestRequired": true`, submit answers.
 
 ### 2.2 Submit answers
 
@@ -65,7 +75,7 @@ If response has `"cryptoTestRequired": true`, continue with submit.
 
 ```json
 {
-  "clientId": "{{clientId}}",
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
   "answers": {
     "1": 2,
     "2": 4,
@@ -84,7 +94,84 @@ Expected success:
 }
 ```
 
-## 3) Poll client status until ready
+## 3) KYC progression events (local test flow)
+
+### 3.1 Sumsub webhook events
+
+Endpoint:
+
+`POST http://localhost:8088/api/v1/kyc/sumsub/event`
+
+Send in this order:
+
+1) applicantCreated
+
+```json
+{
+  "type": "applicantCreated",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation"
+}
+```
+
+2) applicantPending
+
+```json
+{
+  "type": "applicantPending",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation"
+}
+```
+
+3) applicantReviewed
+
+```json
+{
+  "type": "applicantReviewed",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation",
+  "reviewResult": {}
+}
+```
+
+Expected webhook response:
+
+```json
+{
+  "status": "OK"
+}
+```
+
+### 3.2 CRM sync step (environment-dependent)
+
+Your local flow uses:
+
+`POST http://localhost:8088/api/v1/crm/sync`
+
+```json
+[
+  {
+    "status": "Verified",
+    "residence": "false",
+    "group": "false",
+    "identity": ""
+  }
+]
+```
+
+Code note:
+
+- `CrmSyncProcessor` exists in `kyc-service`, but direct REST controller for `/api/v1/crm/sync` is not present in current source.
+- Keep this step if your environment exposes this endpoint via gateway/mock/another service.
+
+## 4) Poll final KYC status
 
 Endpoint:
 
@@ -92,33 +179,78 @@ Endpoint:
 
 ```json
 {
-  "clientId": "{{clientId}}"
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be"
 }
 ```
 
-Ready state for exchange operations:
+Ready for exchange when status becomes `VERIFIED`.
 
-- status is `VERIFIED`
-- required crypto test is completed (when applicable)
+## 5) Prepare payment context (card or account/token)
 
-## 4) Payment binding and operation context before first exchange
+### 5.1 Get providers
 
-1. Get providers  
-   `POST {{URL}}/api/v2/exchange/merchant/payment/provider`
-2. Get payment methods/tokens  
-   `POST {{URL}}/api/v2/exchange/merchant/payment/method`
-3. If token is required and absent -> bind card  
-   `POST {{URL}}/api/v2/exchange/merchant/payment/card/bind`
+`POST {{URL}}/api/v2/exchange/merchant/payment/provider`
 
-Then proceed to quote/order flow for OnRamp or OffRamp.
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "fiatAsset": "BYN",
+  "orderType": "BUY"
+}
+```
 
-## 5) What is validated by WhiteBird during order creation
+### 5.2 Get payment methods/tokens
 
-Core checks in exchange validation include:
+`POST {{URL}}/api/v2/exchange/merchant/payment/method`
 
-- client status must be `VERIFIED`
-- testing completion when required
-- phone confirmation and phone presence checks
-- active order/deposit/withdrawal restrictions
-- payment provider/token validity when required
-- limits, balances, route availability, address checks
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "fiatAsset": "BYN",
+  "orderType": "BUY"
+}
+```
+
+### 5.3 If token required and missing -> bind card
+
+`POST {{URL}}/api/v2/exchange/merchant/payment/card/bind`
+
+```json
+{
+  "clientId": "0d58e7ec-0369-48d7-9804-90c6b23a52be",
+  "providerType": "ASSIST",
+  "returnUrl": "https://partner.example.com/payment/callback"
+}
+```
+
+Expected response:
+
+```json
+{
+  "url": "https://psp.example.com/bind?token=..."
+}
+```
+
+After bind redirect flow finishes, call `/payment/method` again and use returned `id` as payment token.
+
+## 6) What is still required to enable first OnRamp/OffRamp
+
+In practice, after KYC is `VERIFIED`, the remaining setup is:
+
+1. Provider and payment method resolution.
+2. Either:
+   - card binding (for providers with `addPaymentMethod=true`), or
+   - use existing account/method token returned by `/payment/method` (for providers where card binding is not required).
+
+No separate merchant API endpoint for "create current account" was found in `exchange-core` merchant exchange API.
+
+## 7) WhiteBird runtime validations during order creation
+
+Main checks include:
+
+- client status must be `VERIFIED`;
+- required crypto test must be completed;
+- phone confirmation / phone validity checks;
+- active order/deposit/withdrawal restrictions;
+- payment provider/token checks;
+- limits, balances, route availability, crypto address checks.
