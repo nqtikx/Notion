@@ -128,12 +128,6 @@ Request Body:
 }
 ```
 
-Notes:
-
-- `fiatAsset` is optional.
-- `orderType` is optional (`BUY` / `SELL`).
-- In practice, check provider by `id` (example: `ASSIST`).
-
 Response (actual endpoint returns an array):
 
 ```json
@@ -304,8 +298,6 @@ In practice, after KYC is `VERIFIED`, the remaining setup is:
 2. Either:
    - card binding (for providers with `addPaymentMethod=true`), or
    - use existing account/method token returned by `/payment/method` (for providers where card binding is not required).
-
-No separate merchant API endpoint for "create current account" was found in `exchange-core` merchant exchange API.
 
 ## 6) WhiteBird runtime validations during order creation
 
