@@ -1,6 +1,3 @@
-
----
-
 ## 6. Full Onboarding Flow Before OnRamp/OffRamp
 
 This section describes the complete integration flow required before production exchange operations.
