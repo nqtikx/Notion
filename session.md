@@ -189,8 +189,8 @@ Example:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `asset` | string | ✅ | Fiat asset code |
-| `paymentMethod` | string | ✅ | Payment provider |
+| `asset` | string | ✅ Yes | Fiat asset code |
+| `paymentMethod` | string | ✅ Yes | Payment provider |
 | `clientId` | string | ❌ | Merchant client id |
 
 ### Response
@@ -227,8 +227,8 @@ Example:
 
 | Param | Required | Description |
 | --- | --- | --- |
-| `externalClientId` | ✅ | External client id (alternative to `clientId`) |
-| `clientId` | ✅ | Client id (alternative to `externalClientId`) |
+| `externalClientId` | ✅ Yes | External client id (alternative to `clientId`) |
+| `clientId` | ✅ Yes | Client id (alternative to `externalClientId`) |
 
 ### Response
 
@@ -281,7 +281,7 @@ Example:
 | --- | --- | --- | --- |
 | `externalClientId` | string | ❌ | External client id |
 | `sessionIds` | UUID[] | ❌ | Filter by session ids |
-| `clientIds` / `clientId` | string[] / string | ✅ | Alternative client filter |
+| `clientIds` / `clientId` | string[] / string | ✅ Yes | Alternative client filter |
 | `statuses` | string[] | ❌ | Order status filter |
 | `creationDateFrame` | object | ❌ | Creation date filter |
 
