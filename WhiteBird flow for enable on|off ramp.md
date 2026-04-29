@@ -1,76 +1,212 @@
-## 6. Full Onboarding Flow Before OnRamp/OffRamp
+# WhiteBird flow for enable OnRamp/OffRamp
 
-This section describes the complete integration flow required before production exchange operations.
+## Goal
 
-### 6.1 Registration with full profile data (KYC registration)
+This document describes a practical activation flow to bring a client from registration to a state where merchant OnRamp/OffRamp operations can be executed.
 
-Use KYC merchant endpoints in this sequence:
+## 1) Register client with full KYC data
 
-1. `POST /api/v2/kyc/merchant/client/register`  
-   Create WB client with full profile and document data.
-2. `POST /api/v2/kyc/merchant/client/status`  
-   Poll current client status after registration.
-3. Optional helpers:
-   - `POST /api/v2/kyc/merchant/client/personal-number`
-   - `POST /api/v2/kyc/merchant/client/agreed-offer`
+### Endpoint
 
-Alternative lightweight onboarding:
+`POST {{URL}}/api/v2/kyc/merchant/client/register`
 
-- `POST /api/v2/auth/merchant/client/register` (light registration)
-- `POST /api/v2/auth/merchant/client/token/generate` (SDK token for user-context SDK flows)
+### Request body (actual structure used in current flow)
 
-Use light registration only when full KYC data will be collected later through SDK/user flow.
+```json
+{
+  "email": "{{email}}",
+  "firstNameRu": "{{firstNameRu}}",
+  "lastNameRu": "{{lastNameRu}}",
+  "patronymicRu": "{{patronymicRu}}",
+  "firstName": "{{firstName}}",
+  "lastName": "{{lastName}}",
+  "residence": "112",
+  "placeOfBirth": "{{placeOfBirth}}",
+  "birthDate": "{{birthDate}}",
+  "nationality": "112",
+  "registrationCountry": "112",
+  "registrationRegion": "{{registrationRegion}}",
+  "registrationCity": "{{registrationCity}}",
+  "registrationStreet": "{{registrationStreet}}",
+  "registrationHouseAndFlat": "{{registrationHouseAndFlat}}",
+  "identityDocType": "3",
+  "identityDocIssueDate": "{{identityDocIssueDate}}",
+  "identityDocExpireDate": "{{identityDocExpireDate}}",
+  "identityDocNumber": "{{identityDocNumber}}",
+  "personalNumber": "{{personalNumber}}",
+  "postCode": "{{postCode}}",
+  "phone": "{{phone}}",
+  "gender": "{{gender}}",
+  "residenceDistrict": "{{residenceDistrict}}",
+  "identityDocIssuer": "{{identityDocIssuer}}",
+  "exchangeInPersonalInterests": true,
+  "notUSTaxPayer": true,
+  "agreedWithOffer": true
+}
+```
 
-### 6.2 KYC, statuses, and when OnRamp/OffRamp become available
+### Notes
 
-#### Status and KYC checks
+- Keep URL format with slash after host: `{{URL}}/api/...`.
+- In current DTO (`RegisterClientRequest`) `residence` is `String`, not boolean.
+- Save `id` from response as `clientId` for all next steps.
 
-- Integration checks status via `POST /api/v2/kyc/merchant/client/status`.
-- Exchange execution validation requires client status `VERIFIED`.
-- For residents where testing is required:
-  - `GET /api/v2/kyc/merchant/client/crypto-test`
-  - `POST /api/v2/kyc/merchant/client/crypto-test`
-  - Until required test is completed, exchange validation can fail with invalid client status.
+## 2) If residence/nationality is Belarus (`112`) -> complete crypto test
 
-#### What happens after registration
+### 2.1 Get questions
 
-- Partner backend creates/registers client in WhiteBird via API.
-- If KYC process must continue via Sumsub from partner UX:
-  - request temporary token via `POST /api/v2/kyc/merchant/client/sumsub/token`;
-  - run Sumsub flow in partner UI/app using that token;
-  - continue polling `.../client/status` until final state needed by business flow.
+`GET {{URL}}/api/v2/kyc/merchant/client/crypto-test?clientId={{clientId}}`
 
-#### Responsibility split
+If response has `"cryptoTestRequired": true`, continue with submit.
 
-- Partner side:
-  - call registration/status/crypto-test/sumsub-token endpoints;
-  - orchestrate user journey in own UI;
-  - control when to proceed to payment binding and quote/order creation.
-- WhiteBird side:
-  - performs KYC status updates and verification checks;
-  - enforces exchange-time validations (status, testing, phone, MFA, limits, balances, route availability).
+### 2.2 Submit answers
 
-### 6.3 Payment method binding and payment context for operations
+`POST {{URL}}/api/v2/kyc/merchant/client/crypto-test`
 
-Before creating buy/sell orders, resolve provider/token context:
+```json
+{
+  "clientId": "{{clientId}}",
+  "answers": {
+    "1": 2,
+    "2": 4,
+    "3": 9,
+    "4": 11,
+    "5": 14
+  }
+}
+```
 
-1. `POST /api/v2/exchange/merchant/payment/provider`  
-   Get providers available for current client/asset/direction.
-2. `POST /api/v2/exchange/merchant/payment/method`  
-   Get available payment methods/tokens.
-3. If token is missing and provider requires payment method, bind card/payment method:
-   - `POST /api/v2/exchange/merchant/payment/card/bind`
-   - then re-check methods and use returned token.
+Expected success:
 
-Then execute exchange flow:
+```json
+{
+  "accepted": true
+}
+```
 
-- OnRamp: `assets -> provider -> method -> limit/quote/order flow`
-- OffRamp: `assets -> provider -> method -> limit/quote/order flow`
+## 3) KYC progression via Sumsub/CRM events
 
-Operational prerequisites enforced during order validation include:
+### 3.1 Sumsub webhook events (local test sequence)
 
-- client status must be `VERIFIED`;
-- testing must be completed when required;
-- phone confirmation/phone number checks;
-- MFA requirement for deposit/withdrawal operations;
-- valid payment method/provider token when required.
+Endpoint:
+
+`POST http://localhost:8088/api/v1/kyc/sumsub/event`
+
+Headers:
+
+- `Content-Type: application/json`
+- `x-payload-digest: ...` (required outside local profile)
+
+Send in this order:
+
+1. `applicantCreated`
+2. `applicantPending`
+3. `applicantReviewed`
+
+Bodies:
+
+```json
+{
+  "type": "applicantCreated",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation"
+}
+```
+
+```json
+{
+  "type": "applicantPending",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation"
+}
+```
+
+```json
+{
+  "type": "applicantReviewed",
+  "applicantId": "",
+  "externalUserId": "",
+  "inspectionId": "test-inspection",
+  "correlationId": "test-correlation",
+  "reviewResult": {}
+}
+```
+
+Response from Sumsub webhook handler:
+
+```json
+{
+  "status": "OK"
+}
+```
+
+### 3.2 CRM sync step
+
+Your current test flow uses:
+
+`POST http://localhost:8088/api/v1/crm/sync`
+
+```json
+[
+  {
+    "status": "Verified",
+    "residence": "false",
+    "group": "false",
+    "identity": ""
+  }
+]
+```
+
+Important code note:
+
+- In current `kyc-service` source, direct REST controller for `/api/v1/crm/sync` was not found.
+- CRM sync processing is implemented via `CrmSyncProcessor` listener (`UPDATE_PROFILE_STATUS_QUEUE_NAME`).
+- Keep this HTTP step only if your local environment exposes it via another module/gateway/mock.
+
+## 4) Poll client status until ready
+
+Endpoint:
+
+`POST {{URL}}/api/v2/kyc/merchant/client/status`
+
+```json
+{
+  "clientId": "{{clientId}}"
+}
+```
+
+Ready state for exchange operations:
+
+- status is `VERIFIED`
+- required crypto test is completed (when applicable)
+
+## 5) Payment binding and operation context before first exchange
+
+1. Get providers  
+   `POST {{URL}}/api/v2/exchange/merchant/payment/provider`
+2. Get payment methods/tokens  
+   `POST {{URL}}/api/v2/exchange/merchant/payment/method`
+3. If token is required and absent -> bind card  
+   `POST {{URL}}/api/v2/exchange/merchant/payment/card/bind`
+
+Then proceed to quote/order flow for OnRamp or OffRamp.
+
+## 6) What is validated by WhiteBird during order creation
+
+Core checks in exchange validation include:
+
+- client status must be `VERIFIED`
+- testing completion when required
+- phone confirmation and phone presence checks
+- active order/deposit/withdrawal restrictions
+- payment provider/token validity when required
+- limits, balances, route availability, address checks
+
+Note on MFA:
+
+- MFA check is enforced in v3 order flow for deposit/withdrawal scenarios.
+- In legacy v2 buy/sell flow, MFA is not universally enforced for every case.
