@@ -854,6 +854,51 @@ Required body fields:
 
 **Response**
 ```json
-
+{
+    "id": "08d5b13c-5a5b-470b-b244-6a6becb7888b",
+    "number": 821000004152,
+    "conditions": {
+        "fromAsset": "USDT_TRC",
+        "toAsset": "TRX",
+        "fromGrossAmount": "5",
+        "fromNetAmount": "5",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "15.346839",
+        "toNetAmount": "15.116636",
+        "toFeeAmount": "0.230203",
+        "promoCode": null,
+        "rate": "TRX/USDT_TRC",
+        "systemRateValue": "0.3258",
+        "exchangeRateValue": "0.3258",
+        "actualRateValue": "0.3308"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "COMPLETED",
+    "failureMessage": null,
+    "completionDate": "2026-04-30T13:10:38+0000",
+    "creationDate": "2026-04-30T13:10:35+0000",
+    "sessionId": null,
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "USDT_TRC",
+        "amount": "5",
+        "transactionAmount": "5",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "15.116636",
+        "transactionAmount": "15.116636",
+        "feeAmount": "0.230203",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    }
+}
 ```
 
