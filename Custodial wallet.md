@@ -261,12 +261,12 @@ Required body fields:
 - `asset.code`
 - `asset.network`
 - `asset.amount`
+- `toAddress`
 
 **Request**
 ```json
 {
     "clientId": "{{clientId}}",
-    "accountType":"WALLET",
     "asset":{
         "amount":10,
         "code":"TRX",
@@ -385,9 +385,11 @@ Required body fields:
 **POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
-- `fromAsset.code`
-- `fromAsset.amount` or `toAsset.amount` (only one side amount should be fixed)
-- `toAsset.code`
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
 
 **Request**
 ```json
@@ -517,9 +519,11 @@ Required body fields:
 **POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
-- `fromAsset.code`
-- `fromAsset.amount` or `toAsset.amount` (only one side amount should be fixed)
-- `toAsset.code`
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
 
 **Request**
 ```json
@@ -680,25 +684,60 @@ Required body fields:
 {
   "content": [
     {
-      "id": "balance-operation-id",
-      "transactionId": "transaction-id",
-      "number": "9210086",
-      "type": "DEPOSIT",
-      "status": "PROCESSING",
-      "post": null,
-      "providerType": "ASSIST",
-      "paymentSystem": "VISA",
-      "transactionHash": null,
-      "externalCryptoAddress": null,
-      "asset": "BYN",
-      "amount": 100,
-      "requestedAmount": 100,
-      "grossAmount": 100,
-      "netAmount": 97.5,
+      "id": "2bf54839-b540-452b-9014-3ba9d32a1e93",
+      "number": 161000004149,
+      "conditions": {
+        "fromAsset": "TRX",
+        "toAsset": "BYN",
+        "fromGrossAmount": "100",
+        "fromNetAmount": "100",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "97.65",
+        "toNetAmount": "92.08",
+        "toFeeAmount": "5.57",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9765",
+        "exchangeRateValue": "0.9765",
+        "actualRateValue": "0.9208"
+      },
+      "recalculationReason": null,
       "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
-      "userId": "user-identity",
-      "creationDate": "2026-04-30T10:00:00",
-      "completionDate": null
+      "status": "PROCESSING",
+      "failureMessage": null,
+      "completionDate": null,
+      "creationDate": "2026-04-30T11:40:23+0000",
+      "sessionId": null,
+      "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "transactionAmount": "100",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+      },
+      "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "97.65",
+        "transactionAmount": "92.08",
+        "feeAmount": "5.57",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "toToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "link": null,
+        "processorTransactionId": "f42bb8b78d814be48f0256a96c2208ac",
+        "post": null,
+        "paymentSystem": null
+      }
     }
   ],
   "totalElements": 1,
@@ -722,9 +761,14 @@ Required body fields:
 ```json
 {
     "clientId": "{{clientId}}",
-    "fromAsset": "ETH",
-    "toAsset": "RUB"
-
+    "fromAsset": "USDT_TRC",
+    "fromPaymentDetails": {
+        "type": "INTERNAL_BALANCE"
+    },
+    "toAsset": "TRX",
+    "toPaymentDetails": {
+        "type": "INTERNAL_BALANCE"
+    }
 }
 ```
 
@@ -742,9 +786,11 @@ Required body fields:
 **POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
-- `fromAsset.code`
-- `fromAsset.amount` or `toAsset.amount` (only one side amount should be fixed)
-- `toAsset.code`
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
 
 **Request**
 ```json
