@@ -15,11 +15,6 @@ All examples below use `{{URL}}` format and `x-api-key`.
 ### Step 0.1 Get available assets
 **POST** `{{URL}}/api/v2/exchange/merchant/assets?destination=SDK_ACCOUNTING`
 
-**Request**
-```json
-{}
-```
-
 **Response**
 ```json
 {
