@@ -239,13 +239,13 @@ Required body fields:
 **Response**
 ```json
 {
-  "fiatPaymentLink": "https://payment-provider/link",
-  "creationDate": "2026-04-30T10:00:00",
-  "expirationMinutes": 30,
-  "paymentDetails": {
-    "paymentLink": "https://payment-provider/link",
-    "notificationPhoneNumber": null
-  }
+    "fiatPaymentLink": "https://payments.t.paysecure.ru/pay/p2p",
+    "creationDate": "2026-04-30T09:45:15+0000",
+    "expirationMinutes": 15,
+    "paymentDetails": {
+        "paymentLink": "https://payments.t.paysecure.ru/pay/p2p",
+        "notificationPhoneNumber": null
+    }
 }
 ```
 
@@ -265,24 +265,25 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "bab43583-fb31-4685-b470-33c6b89e1718",
-  "asset": {
-    "code": "TRX",
-    "network": "Tron",
-    "amount": 10
-  },
-  "toAddress": "TKFLbWh9oivTF7AFZTpCeVQn1fGx9iiJxM"
+    "clientId": "{{clientId}}",
+    "accountType":"WALLET",
+    "asset":{
+        "amount":10,
+        "code":"TRX",
+        "network":"Tron"
+    },
+    "toAddress":"TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"  // адрес на который выводится крипта 
 }
 ```
 
 **Response**
 ```json
 {
-  "id": "calculation-id",
-  "withdrawalAmount": 10,
-  "commissionAmount": 0.1,
-  "receivedAmount": 9.9,
-  "expirationDate": "2026-04-30T10:15:00"
+    "id": "92db12c2-bf7a-402e-995b-3c43f1e4eb77",
+    "withdrawalAmount": "10",
+    "commissionAmount": "0.263",
+    "receivedAmount": "9.737",
+    "expirationDate": "2026-04-30T09:51:19+0000"
 }
 ```
 
@@ -297,9 +298,10 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "bab43583-fb31-4685-b470-33c6b89e1718",
-  "calculationId": "calculation-id",
-  "accountType": "WALLET"
+    "clientId": "{{clientId}}",
+    "accountType":"WALLET",
+    "calculationId":"ea40bbbf-16a2-4fa2-aada-f55121c45eac",
+    "comment":""  // поля MEMO/comment/TAG как кто называет. поле коментария для тон сети 
 }
 ```
 
@@ -322,11 +324,11 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "bab43583-fb31-4685-b470-33c6b89e1718",
-  "fiatProviderType": "CA",
-  "paymentToken": "payment-token",
+  "clientId": "{{clientId}}",
+  "fiatProviderType": "ASSIST",
+  "paymentToken": "{{payment_token}}",
   "asset": {
-    "code": "RUB",
+    "code": "BYN",
     "amount": 100
   }
 }
@@ -335,11 +337,11 @@ Required body fields:
 **Response**
 ```json
 {
-  "id": "calculation-id",
-  "withdrawalAmount": 100,
-  "commissionAmount": 2.5,
-  "receivedAmount": 97.5,
-  "expirationDate": "2026-04-30T10:15:00"
+    "id": null,
+    "withdrawalAmount": "100",
+    "commissionAmount": "1.5",
+    "receivedAmount": "98.5",
+    "expirationDate": null
 }
 ```
 
@@ -357,14 +359,14 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "bab43583-fb31-4685-b470-33c6b89e1718",
-  "accountType": "WALLET",
-  "fiatProviderType": "CA",
-  "paymentToken": "payment-token",
-  "asset": {
-    "code": "RUB",
-    "amount": 100
-  }
+    "clientId": "{{clientId}}",
+    "accountType": "WALLET",
+    "fiatProviderType": "ASSIST",
+    "paymentToken": "{{payment_token}}",
+    "asset": {
+        "code": "BYN",
+        "amount": 100
+    }
 }
 ```
 
@@ -377,10 +379,10 @@ Required body fields:
 
 ---
 
-## 3) Купить (`buy`) — merchant V2 flow
+## 3) Купить (`buy`) — merchant V3 flow
 
 ### Step 3.1 Create quote
-**POST** `{{URL}}/api/v2/exchange/merchant/quote`
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
 - `fromAsset.code`
@@ -390,70 +392,129 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "{{clientId}}",
-  "fromAsset": {
-    "code": "BYN",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron"
-  },
-  "paymentMethod": "INTERNAL_BALANCE"
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"FIAT_PROVIDER",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
+        "asset":"BYN",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":50,                // cумма 
+        "provider": "ASSIST",       // провайдер 
+        "token": "{{payment_token}}"       // payment token id 
+    },
+    "output":{
+        "type":"INTERNAL_BALANCE",
+        "asset":"TRX"
+    }
 }
 ```
 
 **Response**
 ```json
 {
-  "quoteId": "quote-id",
-  "fromAsset": {
-    "code": "BYN",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron",
-    "amount": 31.5
-  },
-  "rate": 0.315,
-  "plainRate": 0.31,
-  "fee": {
-    "total": 2.5,
-    "service": null,
-    "network": 0.1,
-    "asset": "BYN"
-  },
-  "expirationDate": "2026-04-30T10:15:00"
+    "id": "3cf9f5b7-1013-4769-b396-9eb28e6b408d",
+    "rate": "TRX/BYN",
+    "systemRateValue": "0.9768",
+    "exchangeRateValue": "0.9768",
+    "actualRateValue": "1.0469",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:28:17+0000",
+    "expirationDate": "2026-04-30T11:28:47+0000",
+    "input": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "50",
+        "feeAmount": "3.35",
+        "provider": "ASSIST",
+        "token": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK"
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "47.757985",
+        "feeAmount": "0"
+    }
 }
 ```
 
 ### Step 3.2 Create buy order
-**GET** `{{URL}}/api/v2/exchange/merchant/buy?quoteId={{quoteId}}`
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
 
-Required request params:
-- `quoteId`
+**Request**
+```json
+{
+    "quoteId":"47b2985a-2fe3-427c-9a18-6b16736c460e"
+}
+
+// обменная операция происходит мгновенно 
+```
 
 **Response**
 ```json
 {
-  "id": "order-id",
-  "type": "BUY",
-  "status": "PROCESSING",
-  "creationDate": "2026-04-30T10:00:00",
-  "modificationDate": "2026-04-30T10:00:00",
-  "cryptoTransaction": null,
-  "expiresAtDate": "2026-04-30T10:15:00",
-  "fiatPaymentLink": null
+    "id": "d938165d-2158-4f4e-8bf1-9ef6c5806fdc",
+    "number": 721000004148,
+    "conditions": {
+        "fromAsset": "BYN",
+        "toAsset": "TRX",
+        "fromGrossAmount": "50",
+        "fromNetAmount": "46.65",
+        "fromFeeAmount": "3.35",
+        "toGrossAmount": "47.757985",
+        "toNetAmount": "47.757985",
+        "toFeeAmount": "0",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9768",
+        "exchangeRateValue": "0.9768",
+        "actualRateValue": "1.0469"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "PROCESSING",
+    "failureMessage": null,
+    "completionDate": null,
+    "creationDate": "2026-04-30T11:29:29+0000",
+    "sessionId": null,
+    "input": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "50",
+        "transactionAmount": "50",
+        "feeAmount": "3.35",
+        "status": "PROCESSING",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "toToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "link": "https://payments.t.paysecure.ru/pay/p2p/cc2mc.cfm?merchant_id=...&orderNumber=...&customerNumber=...&orderCurrency=BYN&orderAmount=50.0&checkValue=...&signature=...&tokenFrom=...&tokenTo=...",
+        "processorTransactionId": "c4e50d3e83bd4fccb8bf8b742470475f",
+        "post": null,
+        "paymentSystem": null
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "47.757985",
+        "transactionAmount": "47.757985",
+        "feeAmount": "0",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null
+    }
 }
 ```
 
 ---
 
-## 4) Продать (`sell`) — merchant V2 flow
+## 4) Продать (`sell`) — merchant V3 flow
 
 ### Step 4.1 Create quote
-**POST** `{{URL}}/api/v2/exchange/merchant/quote`
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
 - `fromAsset.code`
@@ -463,61 +524,127 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "{{clientId}}",
-  "fromAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "RUB"
-  },
-  "paymentMethod": "INTERNAL_BALANCE"
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"INTERNAL_BALANCE",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
+        "asset":"TRX",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":100                  // cумма 
+    },
+    "output":{
+        "type":"FIAT_PROVIDER",
+        "asset":"BYN",
+        "provider": "ASSIST",                                // провайдер 
+        "token": "{{payment_token}}"      // payment token id 
+    }
 }
+
+// можно указывать сумму как и в input так и в output
+// systemRateValue     - курс без учета комиссии
+// exchangeRateValue   - курс с учетам комиссии
+// actualRateValue     - пока не используется 
+// feeAmount           - сумма комиссии
+// expirationDate      - время жизни квоты
 ```
 
 **Response**
 ```json
 {
-  "quoteId": "quote-id",
-  "fromAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "RUB",
-    "amount": 9520
-  },
-  "rate": 95.2,
-  "plainRate": 96.1,
-  "fee": {
-    "total": 1.5,
-    "service": null,
-    "network": 0.1,
-    "asset": "RUB"
-  },
-  "expirationDate": "2026-04-30T10:15:00"
+    "id": "a95bf590-c029-47b2-bf95-adbcf50a11bb",
+    "rate": "TRX/BYN",
+    "systemRateValue": "0.9765",
+    "exchangeRateValue": "0.9765",
+    "actualRateValue": "0.9208",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:38:25+0000",
+    "expirationDate": "2026-04-30T11:38:55+0000",
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "feeAmount": "0"
+    },
+    "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "92.08",
+        "feeAmount": "5.57",
+        "provider": "ASSIST",
+        "token": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK"
+    }
 }
 ```
 
 ### Step 4.2 Create sell order
-**GET** `{{URL}}/api/v2/exchange/merchant/sell?quoteId={{quoteId}}`
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
 
-Required request params:
-- `quoteId`
+**Request**
+```json
+{
+    "quoteId":"a95bf590-c029-47b2-bf95-adbcf50a11bb"
+}
+
+// обменная операция происходит мгновенно 
+```
 
 **Response**
 ```json
 {
-  "id": "order-id",
-  "type": "SELL",
-  "status": "PROCESSING",
-  "creationDate": "2026-04-30T10:00:00",
-  "modificationDate": "2026-04-30T10:00:00",
-  "cryptoTransaction": null,
-  "expiresAtDate": "2026-04-30T10:15:00",
-  "depositCryptoAddress": "TKFLbWh9oivTF7AFZTpCeVQn1fGx9iiJxM"
+    "id": "2bf54839-b540-452b-9014-3ba9d32a1e93",
+    "number": 161000004149,
+    "conditions": {
+        "fromAsset": "TRX",
+        "toAsset": "BYN",
+        "fromGrossAmount": "100",
+        "fromNetAmount": "100",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "97.65",
+        "toNetAmount": "92.08",
+        "toFeeAmount": "5.57",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9765",
+        "exchangeRateValue": "0.9765",
+        "actualRateValue": "0.9208"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "PROCESSING",
+    "failureMessage": null,
+    "completionDate": null,
+    "creationDate": "2026-04-30T11:40:23+0000",
+    "sessionId": null,
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "transactionAmount": "100",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    },
+    "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "97.65",
+        "transactionAmount": "92.08",
+        "feeAmount": "5.57",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "toToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "link": null,
+        "processorTransactionId": "f42bb8b78d814be48f0256a96c2208ac",
+        "post": null,
+        "paymentSystem": null
+    }
 }
 ```
 
@@ -526,31 +653,26 @@ Required request params:
 ## 5) Operation details
 
 ### Step 5.1 Get balance operation history/details
-**POST** `{{URL}}/api/v2/exchange/merchant/balance/operation?page=0&size=20&sort=creationDate,desc`
-
-Required body fields:
-- `clientId`
-
-Optional filters:
-- `transactionTypes`
-- `transactionStatuses`
-- `currencies`
-- `accountTypes`
-- `creationDateFrame`
-- `completionDateFrame`
-- `balanceOperationId`
-- `from` / `to` (deprecated; use `creationDateFrame`)
+**POST** `{{URL}}/api/v3/exchange/merchant/order/history?page=0&size=20&sort=creationDate,desc`
 
 **Request**
 ```json
 {
-  "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
-  "transactionTypes": ["DEPOSIT"],
-  "transactionStatuses": [],
-  "currencies": [],
-  "from": null,
-  "to": null
+    "clientIds": [
+        "{{clientId}}"
+    ]
 }
+// "operationTypes": [], // FIAT_PROVIDER  CRYPTO_TRANSFER  INTERNAL_BALANCE
+// "statuses": [],       // PROCESSING  EXPIRED  COMPLETED  FAILED
+// "assets": [],         // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+// "completionDateFrame":{    // дата завершения 
+//     "start":"2024-08-25T00:00:00+0300",
+//     "end":"2026-09-02T00:00:00+0300"
+// },
+// "creationDateFrame":{      // дата создания 
+//     "start":"2024-08-25T00:00:00+0300",
+//     "end":"2026-09-02T00:00:00+0300"
+// }
 ```
 
 **Response**
@@ -586,56 +708,38 @@ Optional filters:
 }
 ```
 
-Supported values:
-- `transactionTypes`: `DEPOSIT`, `WITHDRAWAL`
-- `transactionStatuses`: `PROCESSING`, `DECLINED`, `PROCESSED`
-- `currencies`: `BTC`, `ETH`, `USDT`, `USDC`, `TRX`, `USDT_TRC`, `TON`, `USDT_TON`, `BYN`, `RUB`, `EUR`, `USD`
-- `from`, `to`: `yyyy-MM-dd` (deprecated fields)
-
 ---
 
-## 6) Конвертация (`conversion`) — merchant V2 flow
+## 6) Конвертация (`conversion`) — merchant V3 flow
 
-Для кастодиального кошелька конвертация идет через внутренний баланс (`USER_BALANCE` / `INTERNAL_BALANCE`) и стандартный V2 quote/order flow.
+Для кастодиального кошелька конвертация идет через внутренний баланс (`USER_BALANCE` / `INTERNAL_BALANCE`) и стандартный V3 quote/order flow.
 
-### Step 6.1 Get limit
-**POST** `{{URL}}/api/v2/exchange/merchant/limit`
 
-Required body fields:
-- `fromAsset.code`
-- `toAsset.code`
-- `paymentMethod`
+### Step 6.1 Check limits
+**POST** `{{URL}}/api/v3/exchange/merchant/limit`
 
 **Request**
 ```json
 {
-  "clientId": "{{clientId}}",
-  "fromAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron"
-  },
-  "toAsset": {
-    "code": "BTC",
-    "network": "Bitcoin"
-  },
-  "paymentMethod": "INTERNAL_BALANCE"
+    "clientId": "{{clientId}}",
+    "fromAsset": "ETH",
+    "toAsset": "RUB"
+
 }
 ```
 
 **Response**
 ```json
 {
-  "asset": {
-    "code": "USDT_TRC",
-    "network": "Tron"
-  },
-  "min": 10,
-  "max": 50000
+    "fromMinAmount": "0.00515231",
+    "fromMaxAmount": "6.43319589",
+    "toMinAmount": "947.37",
+    "toMaxAmount": "1182894.74"
 }
 ```
 
 ### Step 6.2 Create quote
-**POST** `{{URL}}/api/v2/exchange/merchant/quote`
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
 
 Required body fields:
 - `fromAsset.code`
@@ -645,63 +749,65 @@ Required body fields:
 **Request**
 ```json
 {
-  "clientId": "{{clientId}}",
-  "fromAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "BTC",
-    "network": "Bitcoin"
-  },
-  "paymentMethod": "INTERNAL_BALANCE"
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"INTERNAL_BALANCE",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
+        "asset":"USDT_TRC",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":5                  // cумма 
+    },
+    "output":{
+        "type":"INTERNAL_BALANCE",
+        "asset":"TRX"
+    }
 }
+
+// можно указывать сумму как и в input так и в output
+// systemRateValue     - курс без учета комиссии
+// exchangeRateValue   - курс с учетам комиссии
+// actualRateValue     - пока не используется 
+// feeAmount           - сумма комиссии
+// expirationDate      - время жизни квоты
 ```
 
 **Response**
 ```json
 {
-  "quoteId": "quote-id",
-  "fromAsset": {
-    "code": "USDT_TRC",
-    "network": "Tron",
-    "amount": 100
-  },
-  "toAsset": {
-    "code": "BTC",
-    "network": "Bitcoin",
-    "amount": 0.0015
-  },
-  "rate": 0.000015,
-  "plainRate": 0.0000152,
-  "fee": {
-    "total": 1.5,
-    "service": null,
-    "network": 0.000001,
-    "asset": "BTC"
-  },
-  "expirationDate": "2026-04-30T10:15:00"
+    "id": "601b24b6-c7c3-4205-8396-79903f76f25e",
+    "rate": "TRX/USDT_TRC",
+    "systemRateValue": "0.3255",
+    "exchangeRateValue": "0.3255",
+    "actualRateValue": "0.3305",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:05:37+0000",
+    "expirationDate": "2026-04-30T11:06:07+0000",
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "USDT_TRC",
+        "amount": "5",
+        "feeAmount": "0"
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "15.130568",
+        "feeAmount": "0.230415"
+    }
 }
 ```
 
-### Step 6.3 Create order
-**GET** `{{URL}}/api/v2/exchange/merchant/buy?quoteId={{quoteId}}`
+### Step 6.3 Create swap operation
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
 
-Required request params:
-- `quoteId`
+**Request**
+```json
+{
+    "quoteId":""
+}
+// обменная операция происходит мгновенно 
+```
 
 **Response**
 ```json
-{
-  "id": "order-id",
-  "type": "BUY",
-  "status": "PROCESSING",
-  "creationDate": "2026-04-30T10:00:00",
-  "modificationDate": "2026-04-30T10:00:00",
-  "cryptoTransaction": null,
-  "expiresAtDate": "2026-04-30T10:15:00",
-  "fiatPaymentLink": null
-}
+
 ```
 
