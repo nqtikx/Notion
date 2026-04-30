@@ -308,3 +308,43 @@ Main checks include:
 - active order/deposit/withdrawal restrictions;
 - payment provider/token checks;
 - limits, balances, route availability, crypto address checks.
+
+---
+
+## 7) Errors and status routing for this flow
+
+This table covers requests used in this document:
+
+- `/api/v2/kyc/merchant/client/register`
+- `/api/v2/kyc/merchant/client/crypto-test` (GET, POST)
+- `/api/v2/kyc/merchant/client/status`
+- `/api/v2/exchange/merchant/payment/provider`
+- `/api/v2/exchange/merchant/payment/card/bind`
+- `/api/v2/exchange/merchant/payment/method`
+
+### Errors and status routing table
+
+| Scope | HTTP | `status` | When it occurs | Example JSON response |
+|---|---:|---|---|---|
+| Any endpoint from this flow | `401` | `Unauthorized` | Invalid/missing `x-api-key`; `externalClientId` mismatch when merchant requires it | `{"message":"Invalid api key","code":401,"status":"Unauthorized"}` |
+| Any endpoint from this flow | `429` | `Too Many Requests` | Rate limit exceeded | `{"message":"Too many requests","code":429,"status":"Too Many Requests"}` |
+| Any endpoint from this flow | `415` | `Unsupported Media Type` | Request sent with unsupported `Content-Type` | `{"message":"Unsupported content type: text/plain; ...","code":415,"status":"Unsupported Media Type"}` |
+| Any endpoint from this flow | `400` | `Bad Request` | Invalid JSON body, missing request param, or generic runtime validation error | `{"message":"Invalid request body","code":400,"status":"Bad Request"}` |
+| Any endpoint with `@Valid` request body | `400` | `BAD_REQUEST` | Bean validation failed (`@NotNull`, `@NotBlank`, `@Email`, etc.) | `{"status":"BAD_REQUEST","message":"Validation errors","code":400,"fields":[{"field":"clientId","value":null,"message":"must not be null"}]}` |
+| `POST /api/v2/kyc/merchant/client/register` | `400` | `Bad Request` | Personal number is missing for BLR registration country | `{"message":"Personal number must not be empty for registration country BLR","code":400,"status":"Bad Request"}` |
+| `POST /api/v2/kyc/merchant/client/crypto-test` | `400` | `Bad Request` | Wrong crypto test answers | `{"message":"Wrong answers to crypto test","code":400,"status":"Bad Request"}` |
+| KYC endpoints with merchant-client lookup (`crypto-test`, `status`) | `400` | `Bad Request` | Client not found in KYC context (validation/runtime failure) | `{"message":"Client not found","code":400,"status":"Bad Request"}` |
+| `/api/v2/exchange/merchant/payment/provider` | `400` | `INVALID_PAYMENT_PROVIDER` | Payment provider is unknown/not available for current request | `{"message":"Payment provider not found","code":400,"status":"INVALID_PAYMENT_PROVIDER"}` |
+| `/api/v2/exchange/merchant/payment/provider`, `/api/v2/exchange/merchant/payment/method`, `/api/v2/exchange/merchant/payment/card/bind` | `400` | `CLIENT_NOT_FOUND` | `clientId` does not belong to merchant, or merchant-client relation missing | `{"message":"Client not found","code":400,"status":"CLIENT_NOT_FOUND"}` |
+| `/api/v2/exchange/merchant/payment/card/bind` | `400` | `CARD_BINDING_FORBIDDEN` | Card binding operation is forbidden by business rules/provider constraints | `{"message":"<provider/business restriction message>","code":400,"status":"CARD_BINDING_FORBIDDEN"}` |
+| `/api/v2/exchange/merchant/payment/method` | `400` | `INVALID_PAYMENT_METHOD` | Payment method cannot be validated for the selected operation | `{"message":"Invalid payment method","code":400,"status":"INVALID_PAYMENT_METHOD"}` |
+| `/api/v2/exchange/merchant/payment/method` | `400` | `INVALID_PAYMENT_TOKEN` | Payment token is missing/invalid for selected provider | `{"message":"Invalid payment token","code":400,"status":"INVALID_PAYMENT_TOKEN"}` |
+
+### Routing summary by HTTP status
+
+| HTTP | Meaning for integrator | Typical action |
+|---:|---|---|
+| `400` | Request/business validation failed | Fix request data, client context, or provider/method parameters |
+| `401` | API key invalid/missing or external client access mismatch | Check `x-api-key` and `externalClientId` usage |
+| `415` | Unsupported media type | Use `Content-Type: application/json` |
+| `429` | Rate limit exceeded | Retry later with backoff |
