@@ -1,8 +1,8 @@
 # CUSTODIAL_WALLET
 
-Кастодиальный кошелек нужен для операций с внутренним балансом клиента: пополнение, вывод, покупка, продажа и конвертация активов.  
-В интерфейсе это 5 быстрых действий (`Пополнить`, `Отправить`, `Купить`, `Продать`, `Конвертация`), а для backend-интеграции ниже описаны только merchant endpoint’ы.  
-Все примеры ниже используют формат `{{URL}}` и `x-api-key`.
+The custodial wallet is used for operations with the client internal balance: deposit, withdrawal, buy, sell, and asset conversion.  
+In the UI, these are 5 quick actions (`Deposit`, `Send`, `Buy`, `Sell`, `Conversion`), and for backend integration only merchant endpoints are described below.  
+All examples below use `{{URL}}` format and `x-api-key`.
 
 ## Headers
 - `x-api-key: {{apiKey}}`
@@ -135,7 +135,7 @@ Required request params:
 
 ---
 
-## 1) Пополнение (`deposit`)
+## 1) Deposit (`deposit`)
 
 ### Step 1.1 Create crypto deposit
 **POST** `{{URL}}/api/v2/exchange/merchant/balance/crypto/deposit`
@@ -251,7 +251,7 @@ Required body fields:
 
 ---
 
-## 2) Отправить (`withdrawal`)
+## 2) Send (`withdrawal`)
 
 ### Step 2.1 Calculate crypto withdrawal
 **POST** `{{URL}}/api/v2/exchange/merchant/balance/crypto/withdrawal/calculate`
@@ -272,7 +272,7 @@ Required body fields:
         "code":"TRX",
         "network":"Tron"
     },
-    "toAddress":"TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"  // адрес на который выводится крипта 
+    "toAddress":"TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"  // destination crypto withdrawal address
 }
 ```
 
@@ -301,7 +301,7 @@ Required body fields:
     "clientId": "{{clientId}}",
     "accountType":"WALLET",
     "calculationId":"ea40bbbf-16a2-4fa2-aada-f55121c45eac",
-    "comment":""  // поля MEMO/comment/TAG как кто называет. поле коментария для тон сети 
+    "comment":""  // MEMO/comment/TAG field, used as destination memo for networks like TON
 }
 ```
 
@@ -379,7 +379,7 @@ Required body fields:
 
 ---
 
-## 3) Купить (`buy`) — merchant V3 flow
+## 3) Buy (`buy`) — merchant V3 flow
 
 ### Step 3.1 Create quote
 **POST** `{{URL}}/api/v3/exchange/merchant/quote`
@@ -396,11 +396,11 @@ Required body fields:
 {
     "clientId": "{{clientId}}",
     "input":{
-        "type":"FIAT_PROVIDER",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
-        "asset":"BYN",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
-        "amount":50,                // cумма 
-        "provider": "ASSIST",       // провайдер 
-        "token": "{{payment_token}}"       // payment token id 
+        "type":"FIAT_PROVIDER",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"BYN",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":50,                // amount
+        "provider": "ASSIST",       // provider
+        "token": "{{payment_token}}"       // payment token id
     },
     "output":{
         "type":"INTERNAL_BALANCE",
@@ -448,7 +448,7 @@ Required body fields:
     "quoteId":"47b2985a-2fe3-427c-9a18-6b16736c460e"
 }
 
-// обменная операция происходит мгновенно 
+// exchange operation is processed immediately
 ```
 
 **Response**
@@ -513,7 +513,7 @@ Required body fields:
 
 ---
 
-## 4) Продать (`sell`) — merchant V3 flow
+## 4) Sell (`sell`) — merchant V3 flow
 
 ### Step 4.1 Create quote
 **POST** `{{URL}}/api/v3/exchange/merchant/quote`
@@ -530,24 +530,24 @@ Required body fields:
 {
     "clientId": "{{clientId}}",
     "input":{
-        "type":"INTERNAL_BALANCE",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
-        "asset":"TRX",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
-        "amount":100                  // cумма 
+        "type":"INTERNAL_BALANCE",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"TRX",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":100                  // amount
     },
     "output":{
         "type":"FIAT_PROVIDER",
         "asset":"BYN",
-        "provider": "ASSIST",                                // провайдер 
-        "token": "{{payment_token}}"      // payment token id 
+        "provider": "ASSIST",                                // provider
+        "token": "{{payment_token}}"      // payment token id
     }
 }
 
-// можно указывать сумму как и в input так и в output
-// systemRateValue     - курс без учета комиссии
-// exchangeRateValue   - курс с учетам комиссии
-// actualRateValue     - пока не используется 
-// feeAmount           - сумма комиссии
-// expirationDate      - время жизни квоты
+// amount can be provided in input or output
+// systemRateValue   - rate without fee
+// exchangeRateValue - rate with fee
+// actualRateValue   - currently not used in UI logic
+// feeAmount         - fee amount
+// expirationDate    - quote lifetime
 ```
 
 **Response**
@@ -589,7 +589,7 @@ Required body fields:
     "quoteId":"a95bf590-c029-47b2-bf95-adbcf50a11bb"
 }
 
-// обменная операция происходит мгновенно 
+// exchange operation is processed immediately
 ```
 
 **Response**
@@ -654,9 +654,9 @@ Required body fields:
 
 ---
 
-## 5) Operation details
+## 5) Operation history/details
 
-### Step 5.1 Get balance operation history/details
+### Step 5.1 Get order history/details
 **POST** `{{URL}}/api/v3/exchange/merchant/order/history?page=0&size=20&sort=creationDate,desc`
 
 **Request**
@@ -666,14 +666,14 @@ Required body fields:
         "{{clientId}}"
     ]
 }
-// "operationTypes": [], // FIAT_PROVIDER  CRYPTO_TRANSFER  INTERNAL_BALANCE
-// "statuses": [],       // PROCESSING  EXPIRED  COMPLETED  FAILED
-// "assets": [],         // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
-// "completionDateFrame":{    // дата завершения 
+// "operationTypes": [], // FIAT_PROVIDER / CRYPTO_TRANSFER / INTERNAL_BALANCE
+// "statuses": [],       // PROCESSING / EXPIRED / COMPLETED / FAILED
+// "assets": [],         // assets: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+// "completionDateFrame":{    // completion date range
 //     "start":"2024-08-25T00:00:00+0300",
 //     "end":"2026-09-02T00:00:00+0300"
 // },
-// "creationDateFrame":{      // дата создания 
+// "creationDateFrame":{      // creation date range
 //     "start":"2024-08-25T00:00:00+0300",
 //     "end":"2026-09-02T00:00:00+0300"
 // }
@@ -749,9 +749,9 @@ Required body fields:
 
 ---
 
-## 6) Конвертация (`conversion`) — merchant V3 flow
+## 6) Conversion (`conversion`) — merchant V3 flow
 
-Для кастодиального кошелька конвертация идет через внутренний баланс (`USER_BALANCE` / `INTERNAL_BALANCE`) и стандартный V3 quote/order flow.
+For custodial wallet, conversion goes through internal balance (`USER_BALANCE` / `INTERNAL_BALANCE`) and standard V3 quote/order flow.
 
 
 ### Step 6.1 Check limits
@@ -797,9 +797,9 @@ Required body fields:
 {
     "clientId": "{{clientId}}",
     "input":{
-        "type":"INTERNAL_BALANCE",  // тип операции INTERNAL_BALANCE   FIAT_PROVIDER  CRYPTO_TRANSFER
-        "asset":"USDT_TRC",              // валюта BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
-        "amount":5                  // cумма 
+        "type":"INTERNAL_BALANCE",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"USDT_TRC",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":5                  // amount
     },
     "output":{
         "type":"INTERNAL_BALANCE",
@@ -807,12 +807,12 @@ Required body fields:
     }
 }
 
-// можно указывать сумму как и в input так и в output
-// systemRateValue     - курс без учета комиссии
-// exchangeRateValue   - курс с учетам комиссии
-// actualRateValue     - пока не используется 
-// feeAmount           - сумма комиссии
-// expirationDate      - время жизни квоты
+// amount can be provided in input or output
+// systemRateValue   - rate without fee
+// exchangeRateValue - rate with fee
+// actualRateValue   - currently not used in UI logic
+// feeAmount         - fee amount
+// expirationDate    - quote lifetime
 ```
 
 **Response**
@@ -849,7 +849,7 @@ Required body fields:
 {
     "quoteId":""
 }
-// обменная операция происходит мгновенно 
+// exchange operation is processed immediately
 ```
 
 **Response**
