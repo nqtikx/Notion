@@ -166,51 +166,11 @@ Use webhooks from Whitebird or use the request from step four
 
 If the client has successfully bound their card, you can get the card id in Whitebird as the paymentToken value
 
-## Fourth step
-
-Get available payment methods for the client
-
-#### POST api/v2/exchange/merchant/payment/method
-
-#### Request Header:
-
-x-api-key
-
-#### Request Body:
-
-```jsx
-{
-    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
-    "fiatAsset": "RUB", -- optional (available RUB)
-    "orderType": "SELL"  -- optional (available BUY and SELL)
-}
-```
-
-#### Response:
-
-```jsx
-{
-        "id": "fa380b87-d2cd-471b-8d92-e13a2494f70d",
-        "number": "4469 **** **** 8872",
-        "brand": "MIR",
-        "providerId": "MTS",
-        "providerType": "MTS",
-        "status": "ENABLED",
-        "isRestricted": false,
-        "isCrypto": false,
-        "country": "RUSSIA"
-}
-```
-
-If the card status is ENABLED, the id field value can be used for the exchange operation as the paymentToken field
-
 ## Buy Crypto Flow:
 
 ### First step
 
-Get available payment methods for the client
-
-#### POST api/v2/exchange/merchant/payment/method
+#### POST api/v2/exchange/merchant/payment/provider
 
 #### Request Header:
 
@@ -220,33 +180,104 @@ x-api-key
 
 ```jsx
 {
-    "clientId": "d028460b-95cd-4562-ac5e-767bf87df40b",
-    "fiatAsset": "RUB", -- optional (available RUB)
-    "orderType": "BUY"  -- optional (available BUY)
+    "clientId": "{{clientId}}",
+    "destination": "SDK_EXCHANGE"
 }
 ```
 
 #### Response:
 
 ```jsx
-[
-    {
-        "id": "fa380b87-d2cd-471b-8d92-e13a2494f70d",
-        "number": "4469 **** **** 8872",
-        "brand": "MIR",
-        "providerId": "MTS",
-        "providerType": "MTS",
-        "status": "ENABLED",
-        "isRestricted": false,
-        "isCrypto": false,
-        "country": "RUSSIA"
-    }
-]
+{
+        "id": "MTS",
+        "name": "MTS",
+        "addPaymentMethod": true,
+        "config": {
+            "paymentSystems": [
+                {
+                    "paymentSystem": "MIR",
+                    "type": "PSP",
+                    "directions": [
+                        {
+                            "direction": "SELL",
+                            "currencies": [
+                                {
+                                    "currency": "RUB",
+                                    "countries": [
+                                        "Russia"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "commissions": [
+            {
+                "buyCommission": "2,5",
+                "sellCommission": "2,0"
+            },
+            {
+                "destination": "EXCHANGE",
+                "buyCommission": "2,5"
+            },
+            {
+                "destination": "SDK_EXCHANGE",
+                "buyCommission": "2,5",
+                "sellCommission": "2,0"
+            },
+            {
+                "destination": "ACCOUNTING",
+                "buyCommission": "0"
+            },
+            {
+                "bank": "RF_CARDS",
+                "destination": "EXCHANGE",
+                "sellCommission": "2,0"
+            },
+            {
+                "bank": "RF_CARDS",
+                "destination": "ACCOUNTING",
+                "sellCommission": "1,5"
+            }
+        ]
+    },
 ```
 
 ### Second step
 
-To create a quota, use id **`api/v2/exchange/merchant/payment/method`** where MTS is enabled
+#### POST api/v2/exchange/merchant/limit
+
+#### Request Header:
+
+x-api-key
+
+#### Request Body:
+
+```jsx
+{
+  "clientId": "{{clientId}}",
+  "fromAsset": { "code": "RUB", "network": null },
+  "toAsset": { "code": "TRX", "network": "Tron" },
+  "paymentMethod": "MTS"
+}
+```
+
+#### Response:
+
+```jsx
+{
+    "asset": {
+        "id": "RUB",
+        "code": "RUB"
+    },
+    "min": 921.05,
+    "max": 368421.05
+}
+```
+
+### Third step
 
 #### POST api/v2/exchange/merchant/quote
 
@@ -254,11 +285,11 @@ To create a quota, use id **`api/v2/exchange/merchant/payment/method`** where MT
 
 x-api-key
 
-#### Request Body:
+#### Request body:
 
 ```jsx
 {
-  "clientId": "d028460b-95cd-4562-ac5e-767bf87df40b",
+  "clientId": "{{clientId}}",
   "fromAsset": {
     "code": "RUB",
     "network": null,
@@ -269,7 +300,6 @@ x-api-key
     "network": "Tron"
   },
   "paymentMethod": "MTS",
-  "paymentMethodToken": "fa380b87-d2cd-471b-8d92-e13a2494f70d",
   "destinationCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"
 }
 ```
@@ -278,7 +308,7 @@ x-api-key
 
 ```jsx
 {
-    "quoteId": "620ece6b-bb48-4f68-9d6f-09496e94170f",
+    "quoteId": "44008f44-3633-4ba3-b1a3-a90a85204b9f",
     "fromAsset": {
         "code": "RUB",
         "amount": "922"
@@ -286,25 +316,25 @@ x-api-key
     "toAsset": {
         "code": "TRX",
         "network": "Tron",
-        "amount": "33.326158"
+        "amount": "31.495284"
     },
-    "rate": 27.666,
-    "plainRate": 26.7631,
+    "rate": 29.2742,
+    "plainRate": 28.306,
     "fee": {
         "total": 23.05,
         "service": null,
         "network": 0.263,
         "asset": "RUB"
     },
-    "expirationDate": "2026-03-31T06:42:05+0000"
+    "expirationDate": "2026-05-04T09:24:15+0000"
 }
 ```
 
-### Third step
+### Fourth step
 
 Create an order specifying `returnUrl` and `failUrl` (optional) after quote creation
 
-#### GET api/v2/exchange/merchant/buy?quoteId=c6d3c3b2-78ce-4374-8272-9bd2a9160a5d\&returnUrl=https://www.google.com\&failUrl=https://www.google.com
+#### GET api/v2/exchange/merchant/buy?quoteId={{quoteId}}\&returnUrl=https://www.google.com\&failUrl=https://www.google.com
 
 #### Request Header:
 
@@ -314,15 +344,96 @@ x-api-key
 
 ```jsx
 {
-    "id": "1492954d-a1c5-40f9-9dde-abac06278504",
+    "id": "966bc041-80a5-413a-abc7-0a45c13f9489",
     "type": "BUY",
     "status": "PROCESSING",
-    "creationDate": "2026-03-31T07:02:47.976606",
-    "modificationDate": "2026-03-31T07:02:48.319782"
+    "creationDate": "2026-05-04T09:25:15.257418",
+    "modificationDate": "2026-05-04T09:25:17.952287"
 }
 ```
 
 ### Fourth step
+
+Take "orderIdentity": "xxxx", // the number for confirming the transaction in the bank's application
+
+#### GET https://api.dev.wbdevel.net/api/v2/exchange/merchant/order?orderId={{orderId}}
+
+#### Request Header:
+
+x-api-key
+
+#### Response:
+
+```jsx
+{
+    "id": "966bc041-80a5-413a-abc7-0a45c13f9489",
+    "type": "BUY",
+    "status": "PROCESSING",
+    "creationDate": "2026-05-04T09:25:15.257418",
+    "modificationDate": "2026-05-04T09:25:17.952287",
+    "number": 151000004194,
+    "exchangeOperation": {
+        "inputCurrency": "RUB",
+        "inputAsset": 922,
+        "outputCurrency": "TRX",
+        "outputAsset": 31.495284,
+        "exchangeFeeAssetInFiat": 23.05,
+        "bonusOutputAsset": null,
+        "plainRatio": 28.306,
+        "ratio": 29.2742,
+        "currencyPair": {
+            "fromCurrency": "RUB",
+            "toCurrency": "TRX"
+        }
+    },
+    "cryptoTransaction": {
+        "hash": null,
+        "externalCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
+        "internalCryptoAddress": null,
+        "fromAddress": null,
+        "toAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
+        "status": "NEW",
+        "currency": "TRX",
+        "fee": null,
+        "feePaymentEnabledByClient": false,
+        "type": "AUTO",
+        "comment": null
+    },
+    "fiatTransaction": {
+        "status": "PROCESSING",
+        "paymentToken": null,
+        "post": null,
+        "brand": null,
+        "internalToken": null,
+        "orderIdentity": "7085091", // the number for confirming the transaction in the bank's application
+        "link": null,
+        "providerType": "MTS",
+        "paymentType": null,
+        "processingBank": null,
+        "resultMessage": null,
+        "currency": "RUB",
+        "processorTransactionNumber": null
+    },
+    "client": {
+        "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562"
+    },
+    "serverDate": "2026-05-04T09:25:36+0000",
+    "exchangeType": "SELL",
+    "operationType": "FIAT_TO_CRYPTO",
+    "orderType": "DEFAULT",
+    "completionDate": null,
+    "resultMessage": null,
+    "submitByResident": null,
+    "merchantName": "wb",
+    "merchantBonus": null,
+    "promoCodeDetails": null,
+    "fromSource": "EXT",
+    "toSource": "EXT",
+    "expiresAtDate": null
+}
+```
+
+### Fifth step
 
 #### **Payment confirmation step (MTS Bank)**
 
@@ -332,7 +443,7 @@ In production flow, after order creation the client must complete payment in the
 
 ### **Check order status**
 
-#### GET /api/v2/exchange/merchant/order?orderId=1492954d-a1c5-40f9-9dde-abac06278504
+#### GET /api/v2/exchange/merchant/order?orderId={{orderId}}
 
 #### Request Header:
 
