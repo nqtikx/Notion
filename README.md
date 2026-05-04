@@ -1,383 +1,899 @@
-# SDK Documentation
+# CUSTODIAL_WALLET
 
-## Introduction
-Welcome to the WhiteBird SDK documentation!
+The custodial wallet is used for operations with the client internal balance: deposit, withdrawal, buy, sell, and asset conversion.  
+In the UI, these are 5 quick actions (`Deposit`, `Send`, `Buy`, `Sell`, `Conversion`), and for backend integration only merchant endpoints are described below.  
+All examples below use `{{URL}}` format and `x-api-key`.
 
-This SDK provides the ability to integrate **WhiteBird instant crypto exchange** functionality directly into your website (JS SDK).  
-Authorization flow depends on the selected SDK mode.
-
-The SDK supports interaction with WhiteBird in three modes:
-- LoginMode
-- AuthMode
-- TokensMode
-
-#### Presentation
-- You can review the visual flow in [Figma](https://www.figma.com/design/QhTl1W0BEncjvGXRu03UiW/SDK-flow?node-id=0-1&p=f)
-- Demo is available at: [SDK Demo](https://sdk.dev.wbdevel.net/v2.0/assets/sdk-demo/index.html)  
-  (```MerchantId: 11111111-1111-1111-1111-111111111111```)
-
-Descriptions of each mode are available [below](#brief-description-of-modes) in this documentation.
-
-## High-level process overview
-
-### General WhiteBird SDK flow
-
-### One-line flow
-`Initialize SDK -> resolve mode -> apply status gates -> allow operations`
-
-### Scenarios
-- **LoginMode:** SDK handles user auth flow, then routes by status.
-- **AuthMode:** SDK handles auth, returns tokens via `onLogin(...)`, then applies status gates.
-- **TokensMode:** SDK starts with provided tokens, skips login screen, then applies status gates.
-
-### Status routing table
-
-| Condition | SDK behavior | Result |
-|---|---|---|
-| `NOT_VERIFIED` | Verification is required | Agreements -> SumSub |
-| `PENDING` | Access is limited | Wait AML/KYC decision |
-| `VERIFIED` + `testingNeeded=true` + `testingCompleted=false` | Crypto test gate | Complete crypto test |
-| `VERIFIED` + compliance checks passed | Full access | Exchange / wallet operations |
-| `FROZEN` | Restricted mode | Operations are limited or blocked by policy |
-| `ARREST` | Blocked mode | Exchange access denied |
+## Headers
+- `x-api-key: {{apiKey}}`
+- `Content-Type: application/json`
 
 ---
 
-### Registration process
-
-### One-line flow
-`Sign up -> agreements -> email confirmation -> conditional phone verification -> register -> auto-login`
-
-### Scenarios
-- User submits sign-up form and accepts agreements.
-- Email confirmation is required.
-- For `countryCode == BY`, SMS phone confirmation is required before completion.
-- For non-BY users, registration proceeds without mandatory SMS step.
-- On success, SDK performs login and continues with authorized session.
-
-### Registration routing table
-
-| Condition | Behavior | Result |
-|---|---|---|
-| Email not confirmed | Registration paused | Stay in confirmation step |
-| `countryCode == BY` | Phone code required | Continue after SMS confirm |
-| `countryCode != BY` | No mandatory SMS gate | Continue to registration |
-| Registration success | Auto-login | Tokens/session created |
-
----
-
-### Verification process
-
-### One-line flow
-`Agreements -> SumSub KYC -> AML review -> verified status -> optional crypto-test gate`
-
-### Scenarios
-- User confirms legal statements and offer agreement.
-- SDK runs SumSub (documents + liveness).
-- User enters AML pending state (`PENDING`) until decision.
-- If approved, user becomes `VERIFIED`.
-- If crypto test is required, it must be completed before full access.
-
-### Verification routing table
-
-| Condition | Behavior | Result |
-|---|---|---|
-| Agreements not confirmed | Verification blocked | Stay on agreements |
-| SumSub completed, AML pending | Limited access | `PENDING` |
-| AML approved | Verification done | `VERIFIED` |
-| Crypto test required | Additional gate | Complete test to continue |
-
----
-
-### Authorization process
-
-### One-line flow
-`Credentials -> MFA/Captcha checks -> token issuance -> status-based access`
-
-### Scenarios
-- User signs in with email/password.
-- If MFA is enabled, 2FA code is required.
-- If captcha is required, captcha challenge must pass.
-- On success, tokens are issued.
-- Access to operations still depends on verification/compliance status.
-
-### Authorization routing table
-
-| Condition | Behavior | Result |
-|---|---|---|
-| Invalid credentials | Auth fails | Stay on sign-in |
-| MFA enabled | 2FA required | Continue after valid code |
-| Captcha required | Captcha required | Continue after valid challenge |
-| Auth success | Tokens issued | Authorized session (with status gates) |
-
-## Brief description of modes
-
-Terminology:
-- Client – the company integrating the SDK
-- User – the end user of the product
-
-### LoginMode
-This mode is intended for user authentication *(authorization/registration/verification)* via WhiteBird. It allows users to log in with WhiteBird credentials, perform exchange operations, view their transaction history, and contact support. Suitable for scenarios where you need to add the ability to deposit/withdraw funds or exchange cryptocurrency to fiat and back.
-
-### AuthMode
-In this mode, the SDK is used for user authentication *(authorization/registration/verification)* via WhiteBird and provides user authorization tokens, which can be used for interaction with the WhiteBird API. In this case, the client is **not** a *user identification agent* for us, and implements their own custom UI for exchange, which makes operations through our API using the client’s authorization tokens.
-
-### TokensMode
-This mode is designed to run our SDK with access tokens. It includes all the capabilities of LoginMode but removes WhiteBird authorization.  
-It implies a seamless transition from the client’s app to the WhiteBird platform and back. In this mode, the client is assumed to be a *user identification agent* for us.
-
-## User identification agent
-
-The main feature enabled by this is the use of SDK in TokensMode. The user will not need to log into the WhiteBird platform themselves; the client does this on their behalf, obtaining Auth tokens through **backend-to-backend** interaction over REST API, using the merchant’s API Key.
-
-- User registration request: [register](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#register-post-request)
-- User token request: [generate](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#generate-tokens-request)
-
-## Integration scenarios
-
-### 1) LoginMode — WhiteBird handles everything
-
-Use this scenario when the partner wants WhiteBird to fully own the user flow inside SDK.
-
-**Flow**
-1. Partner opens WhiteBird SDK in `LoginMode`.
-2. User signs in or signs up inside SDK.
-3. User completes onboarding steps inside SDK.
-4. User completes KYC / compliance / crypto test steps if required.
-5. SDK routes the user according to status and compliance rules.
-6. Once all required checks are completed, SDK opens exchange flow.
-
-**Example**
-```js
-wbExchangeSdk.setup({
-  // required params:
-  el: document.getElementById("wbExchangeSdkWrapper"),
-  mode: wbExchangeSdk.mode.LoginMode,
-  merchantId: "xxxx",
-  merchantPass: "xxxx", // parameter for SDK, used as Authorization: Basic <merchantPass>. Needed to generate accessToken and refreshToken
-
-  // LoginMode
-  onUserData: ({ email, accessToken, refreshToken }) => {
-    console.log("", email, accessToken, refreshToken);
-  },
-});
-```
-### 2) API register + tokens + LoginMode — partner-authenticated LoginMode flow
-
-Use this scenario when the partner performs registration and login on its side, generates WhiteBird client tokens backend-to-backend, and opens SDK in an already authenticated context.
-
-**Backend flow**
-1. Partner registers the user backend-to-backend in WhiteBird with a lightweight payload (`email`, `phone`):  
-   `POST /api/v2/auth/merchant/client/register`
-
-2. Partner receives `clientId` (`{ id, status }`).
-
-3. Partner generates tokens backend-to-backend for this client (**required**):  
-   `POST /api/v2/auth/merchant/client/token/generate`
-
-**User flow**
-1. Partner opens WhiteBird SDK in `LoginMode` with `isAuthAgent: true` and generated tokens.
-2. User enters SDK in partner-authenticated context.
-3. SDK applies onboarding / KYC / compliance routing.
-4. After all required checks are completed, exchange becomes available in SDK.
-
-**Example**
-```js
-wbExchangeSdk.setup({
-  // required params:
-  el: document.getElementById("wbExchangeSdkWrapper"),
-  mode: wbExchangeSdk.mode.LoginMode,
-  merchantId: "xxxx",
-  merchantPass: "xxxx", // parameter for SDK, used as Authorization: Basic <merchantPass>. Needed to generate accessToken and refreshToken
-
-  // partner-generated client tokens
-  accessToken: "****",
-  refreshToken: "****",
-
-  // required for this flow behavior
-  isAuthAgent: true,
-
-  // LoginMode callback
-  onUserData: ({ email, accessToken, refreshToken }) => {
-    console.log("", email, accessToken, refreshToken);
-  },
-});
-```
-
-### 3) API KYC register + tokens + TokensMode — partner is an identification agent
-
-Use this scenario when the partner already has full KYC/PID data and sends it to WhiteBird. Partner owns onboarding and KYC on its side, and SDK is used only for final compliance checks and exchange access.
-
-**Backend flow**
-1. Partner registers user backend-to-backend with full KYC payload:  
-   `POST /api/v2/kyc/merchant/client/register`
-2. Partner receives `clientId` (`{ id, status }`).
-3. (Optional) [Partner checks current status](https://github.com/nqtikx/Notion/blob/main/onboardingAPI.md#client-status):  
-   `POST /api/v2/kyc/merchant/client/status`
-4. Partner generates tokens backend-to-backend:  
-   `POST /api/v2/auth/merchant/client/token/generate`
-5. Partner starts SDK in `TokensMode` with issued tokens.
-
-**User flow**
-1. User enters SDK already authorized by tokens (no login / sign-up screen).
-2. SDK applies status / compliance gates.
-3. If any remaining verification step is required, user completes it in SDK.
-4. After required checks are completed, exchange becomes available in SDK.
-
-**Example**
-```js
-wbExchangeSdk.setup({
-  // required params:
-  el: document.getElementById("wbExchangeSdkWrapper"),
-  mode: wbExchangeSdk.mode.TokensMode,
-  merchantId: "xxxx",
-  merchantPass: "xxxx", // parameter for SDK, used as Authorization: Basic <merchantPass>. Needed to generate accessToken and refreshToken
-
-  // TokensMode
-  accessToken: "****",
-  refreshToken: "****",
-});
-```
-### 4) AuthMode — onboarding and KYC in WhiteBird, then API integration with client tokens
-
-Use this scenario when the partner wants WhiteBird to handle authentication, onboarding, and KYC, and then continue via client tokens and client endpoints on partner side.
-
-**Flow**
-1. Partner starts SDK in `AuthMode`.
-2. User signs in or signs up inside SDK.
-3. User completes onboarding and KYC inside WhiteBird SDK.
-4. After successful authorization, SDK returns client tokens via `onLogin(...)`.
-5. Partner uses these client tokens for further API integration through client endpoints.
-
-**Example**
-```js
-wbExchangeSdk.setup({
-  // required params:
-  el: document.getElementById("wbExchangeSdkWrapper"),
-  mode: wbExchangeSdk.mode.AuthMode,
-  merchantId: "xxxx",
-  merchantPass: "xxxx", // parameter for SDK, used as Authorization: Basic <merchantPass>. Needed to generate accessToken and refreshToken
-
-  // AuthMode
-  onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
-    console.log("", email, accessToken, refreshToken, isUserVerified);
-  },
-});
-```
-### 5) API register + tokens + AuthMode — login/onboarding on partner side, KYC in WhiteBird, merchant API after that
-
-Use this scenario when the partner keeps login and onboarding on its side, delegates KYC UX to WhiteBird via SDK, and continues the operational flow via merchant endpoints.
-
-**Backend flow**
-1. Partner registers user backend-to-backend in WhiteBird:  
-   `POST /api/v2/auth/merchant/client/register`
-2. Partner generates tokens backend-to-backend:  
-   `POST /api/v2/auth/merchant/client/token/generate`
-
-**User flow**
-1. Partner handles login and onboarding on its own side.
-2. Partner opens WhiteBird SDK in `AuthMode` for KYC / compliance UX.
-3. User completes required KYC / compliance steps in WhiteBird.
-4. SDK returns client tokens via `onLogin(...)` if they are needed for follow-up steps.
-5. Partner continues operational flow via merchant endpoints (server-to-server with `x-api-key`).
-
-Repeated logins usually repeat the steps of token generation -> SDK open.
-
-**Example**
-```js
-wbExchangeSdk.setup({
-  // required params:
-  el: document.getElementById("wbExchangeSdkWrapper"),
-  mode: wbExchangeSdk.mode.AuthMode,
-  merchantId: "xxxx",
-  merchantPass: "xxxx", // parameter for SDK, used as Authorization: Basic <merchantPass>. Needed to generate accessToken and refreshToken
-
-  // AuthMode
-  onLogin: ({ email, accessToken, refreshToken, isUserVerified }) => {
-    console.log("", email, accessToken, refreshToken, isUserVerified);
-  },
-});
-```
-
-## Adding to a website
-
-### Connection via CDN
-```html
-<script src="https://sdk.dev.wbdevel.net/v2.0/integration/wbExchangeSdk-v001.js"></script>
-```
-
-### Container
-- The SDK content is designed for mobile view – the container should not be less than 360px wide.
-- The SDK container can be placed anywhere on the website.
-- Pass the HTML element of this container in the configuration.
-- !! The SDK does not modify the container’s styles, all container styling is handled by the application.
-- The SDK iframe takes up all available space within the container.
-
-## Optional SDK configuration parameters
-
-**externalClientId** - string, should be provided by the merchant to link WhiteBird users with merchant’s users.
-
-**email** - string, allows pre-filling the email field to reduce user actions during WhiteBird login.
-
-**currencyAmount** - int, allows pre-filling the currency amount for the exchange.
-
-**currencyFrom** - string from Currency enum. Allows pre-filling the currency to be exchanged from.
-
-**disableCurrencyFrom** - bool, disable currencyFrom selector, also it blocks amount field (if it was provided).
-
-**currencyTo** - string from Currency enum. Allows pre-filling the currency to be exchanged to.
-
-**disableCurrencyTo** - bool, disable currencyTo field, also it blocks cryptoWallet field (if it was provided).
-
-**cryptoWallet** - string, allows pre-filling the user’s wallet field.
-
-**showBackButtonOnHomePage** - bool, shows a "back" button in our UI and reacts to it using the onExit callback.
-
-**onExit** - () -> void, callback to handle "back" button press.
-
-**onOrderCreated** - ({orderId, internalCryptoAddress}) -> void, callback for order creation notification for merchant.
-
-**onUserData** - ({ email, accessToken, refreshToken }) => {} -> callback is called in LoginMode when receiving user data from the SDK.
-
-**currencyToAmount** - int, allows pre-filling the target amount for exchange.
-
-**disableAmount** - bool, disables amount input editing in SDK UI.
-
-**isAuthAgent** - bool, indicates partner identification-agent mode behavior.
-
-**redirectUrl** - string, URL used by SDK for redirect/navigation after specific flow actions.
-
-**startAppPage** - string, allows starting SDK from a specific internal page/state.
-
-**disableAddCard** - bool, disables add-card flow in SDK UI.
-
-**onOrderCompleted** - ({orderId, status}) -> void, callback for order completion notification for merchant.
-
-**refId** - string, optional external reference identifier passed through SDK context.
-
-**debug** - bool, enables SDK debug logging in browser console.
-
-**isTgBot** - bool, enables Telegram WebApp-specific behavior for link opening.
-
-It is recommended to call ```wbExchangeSdk.cleanup()``` after finishing work with the SDK.
-
-```typescript
-let currencyFrom: Currency;
-let currencyTo: Currency;
-
-enum Currency {
-    BYN,
-    RUB,
-    USD,
-    EUR,
-    BTC,
-    ETH,
-    USDT, // ERC-20
-    USDC, // ERC-20
-    TRX,
-    USDT_TRC, // TRC-20
-    TON,
-    USDT_TON, // TON
-    WBP, // TRC-20
+## 0) Wallet base data
+
+### Step 0.1 Get available assets
+**POST** `{{URL}}/api/v2/exchange/merchant/assets?destination=SDK_ACCOUNTING`
+
+**Response**
+```json
+{
+  "fiatAssets": [
+    { "id": "BYN", "code": "BYN" },
+    { "id": "RUB", "code": "RUB" },
+    { "id": "USD", "code": "USD" },
+    { "id": "EUR", "code": "EUR" }
+  ],
+  "cryptoAssets": [
+    { "id": "BTC", "code": "BTC", "network": "Bitcoin" },
+    { "id": "ETH", "code": "ETH", "network": "Ethereum" },
+    { "id": "TRX", "code": "TRX", "network": "Tron" },
+    { "id": "USDT_TRC", "code": "USDT", "network": "Tron", "protocol": "TRC-20" }
+  ]
 }
 ```
+
+### Step 0.2 Get current balance operations
+**GET** `{{URL}}/api/v2/exchange/merchant/balance/current?clientId={{clientId}}`
+
+Required request params:
+- `clientId`
+
+**Response**
+```json
+{
+  "fiatOperations": [
+    {
+      "number": 9210086,
+      "accountType": "WALLET",
+      "operationType": "DEPOSIT",
+      "amount": 100,
+      "transactionId": "fiat-transaction-id",
+      "asset": "BYN",
+      "status": "PROCESSING",
+      "fiatProvider": "ASSIST",
+      "orderIdentity": "order-id",
+      "createdAt": "2026-04-30T10:00:00"
+    }
+  ],
+  "cryptoOperations": [
+    {
+      "number": 9210087,
+      "accountType": "WALLET",
+      "operationType": "DEPOSIT",
+      "submitTimeout": "DEFAULT",
+      "transactionId": "crypto-transaction-id",
+      "status": "PENDING",
+      "depositCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
+      "amount": 100,
+      "asset": "USDT_TRC",
+      "network": "Tron",
+      "txHash": null,
+      "createdAt": "2026-04-30T10:00:00"
+    }
+  ]
+}
+```
+
+### Step 0.3 Get enhanced merchant account balances
+**GET** `{{URL}}/api/v2/accounting/merchant/account/enhanced`
+
+**Response**
+```json
+{
+  "balances": [
+    {
+      "currency": "BTC",
+      "type": "USER_BALANCE",
+      "amount": 0.00005088,
+      "usdRate": 77622.51,
+      "usdAmount": 3.95,
+      "creationDate": 1732799992688,
+      "modificationDate": 1777534608348,
+      "fiat": false
+    },
+    {
+      "currency": "USDT",
+      "type": "USER_BALANCE",
+      "amount": 40.24507500,
+      "usdRate": 1,
+      "usdAmount": 40.25,
+      "creationDate": 1732799992688,
+      "modificationDate": 1777534606246,
+      "fiat": false
+    },
+    {
+      "currency": "USD",
+      "type": "USER_BALANCE",
+      "amount": 85.00,
+      "usdRate": 1,
+      "usdAmount": 85.00,
+      "creationDate": 1732799992688,
+      "modificationDate": 1732800042763,
+      "fiat": true
+    },
+    {
+      "currency": "RUB",
+      "type": "USER_BALANCE",
+      "amount": 4109.49,
+      "usdRate": 0.012,
+      "usdAmount": 49.31,
+      "creationDate": 1732799992688,
+      "modificationDate": 1776797970394,
+      "fiat": true
+    }
+  ],
+  "totalFiatUsdAmount": 134.31,
+  "totalCryptoUsdAmount": 93.48
+}
+```
+
+---
+
+## 1) Deposit (`deposit`)
+
+### Step 1.1 Create crypto deposit
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/crypto/deposit`
+
+Required body fields:
+- `clientId`
+- `accountType`
+- `asset.code`
+- `asset.network`
+- `asset.amount`
+
+**Request**
+```json
+{
+  "clientId": "b62c5c11-3f1d-4e54-95f5-4f19f2fd4e48",
+  "accountType": "WALLET",
+  "asset": {
+    "code": "USDT_TRC",
+    "network": "Tron",
+    "amount": 100
+  }
+}
+```
+
+**Response**
+```json
+{
+  "transactionId": "e9b08950-ed34-4e78-88ca-5e74b22a125c",
+  "depositCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"
+}
+```
+
+### Step 1.2 Get fiat payment methods
+**POST** `{{URL}}/api/v2/exchange/merchant/payment/method`
+
+Required body fields:
+- `clientId`
+
+Optional filters:
+- `fiatAsset`
+- `orderType`
+- `destination`
+- `providers`
+- `isCrypto`
+- `countryGroup`
+
+**Request**
+```json
+{
+  "clientId": "b62c5c11-3f1d-4e54-95f5-4f19f2fd4e48",
+  "fiatAsset": "BYN",
+  "orderType": "BUY",
+  "destination": "SDK_ACCOUNTING"
+}
+```
+
+**Response**
+```json
+[
+  {
+    "id": "payment-token",
+    "number": "**** **** **** 1111",
+    "brand": "VISA",
+    "providerId": "ASSIST",
+    "providerType": "ASSIST",
+    "status": "ENABLED",
+    "isRestricted": false,
+    "isCrypto": false,
+    "country": "Belarus",
+    "currency": "BYN",
+    "supportedCurrencies": ["BYN"]
+  }
+]
+```
+
+### Step 1.3 Create fiat deposit
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/fiat/deposit`
+
+Required body fields:
+- `clientId`
+- `accountType`
+- `fiatProviderType`
+- `asset.code`
+- `asset.amount`
+- one of `paymentToken` or `internalToken`
+
+**Request**
+```json
+{
+  "clientId": "b62c5c11-3f1d-4e54-95f5-4f19f2fd4e48",
+  "accountType": "WALLET",
+  "fiatProviderType": "ASSIST",
+  "paymentToken": "payment-token",
+  "asset": {
+    "code": "BYN",
+    "amount": 100
+  }
+}
+```
+
+**Response**
+```json
+{
+    "fiatPaymentLink": "https://payments.t.paysecure.ru/pay/p2p",
+    "creationDate": "2026-04-30T09:45:15+0000",
+    "expirationMinutes": 15,
+    "paymentDetails": {
+        "paymentLink": "https://payments.t.paysecure.ru/pay/p2p",
+        "notificationPhoneNumber": null
+    }
+}
+```
+
+---
+
+## 2) Send (`withdrawal`)
+
+### Step 2.1 Calculate crypto withdrawal
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/crypto/withdrawal/calculate`
+
+Required body fields:
+- `clientId`
+- `asset.code`
+- `asset.network`
+- `asset.amount`
+- `toAddress`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "asset":{
+        "amount":10,
+        "code":"TRX",
+        "network":"Tron"
+    },
+    "toAddress":"TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4"  // destination crypto withdrawal address
+}
+```
+
+**Response**
+```json
+{
+    "id": "92db12c2-bf7a-402e-995b-3c43f1e4eb77",
+    "withdrawalAmount": "10",
+    "commissionAmount": "0.263",
+    "receivedAmount": "9.737",
+    "expirationDate": "2026-04-30T09:51:19+0000"
+}
+```
+
+### Step 2.2 Create crypto withdrawal
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/crypto/withdrawal`
+
+Required body fields:
+- `clientId`
+- `calculationId`
+- `accountType`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "accountType":"WALLET",
+    "calculationId":"ea40bbbf-16a2-4fa2-aada-f55121c45eac",
+    "comment":""  // MEMO/comment/TAG field, used as destination memo for networks like TON
+}
+```
+
+**Response**
+```json
+{
+  "transactionId": "crypto-withdrawal-transaction-id"
+}
+```
+
+### Step 2.3 Calculate fiat withdrawal
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/fiat/withdrawal/calculate`
+
+Required body fields:
+- `clientId`
+- `fiatProviderType`
+- `asset.code`
+- `asset.amount`
+
+**Request**
+```json
+{
+  "clientId": "{{clientId}}",
+  "fiatProviderType": "ASSIST",
+  "paymentToken": "{{payment_token}}",
+  "asset": {
+    "code": "BYN",
+    "amount": 100
+  }
+}
+```
+
+**Response**
+```json
+{
+    "id": null,
+    "withdrawalAmount": "100",
+    "commissionAmount": "1.5",
+    "receivedAmount": "98.5",
+    "expirationDate": null
+}
+```
+
+### Step 2.4 Create fiat withdrawal
+**POST** `{{URL}}/api/v2/exchange/merchant/balance/fiat/withdrawal`
+
+Required body fields:
+- `clientId`
+- `accountType`
+- `fiatProviderType`
+- `asset.code`
+- `asset.amount`
+- one of `paymentToken` or `internalToken`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "accountType": "WALLET",
+    "fiatProviderType": "ASSIST",
+    "paymentToken": "{{payment_token}}",
+    "asset": {
+        "code": "BYN",
+        "amount": 100
+    }
+}
+```
+
+**Response**
+```json
+{
+  "transactionId": "fiat-withdrawal-transaction-id"
+}
+```
+
+---
+
+## 3) Buy (`buy`) — merchant V3 flow
+
+### Step 3.1 Create quote
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
+
+Required body fields:
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"FIAT_PROVIDER",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"BYN",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":50,                // amount
+        "provider": "ASSIST",       // provider
+        "token": "{{payment_token}}"       // payment token id
+    },
+    "output":{
+        "type":"INTERNAL_BALANCE",
+        "asset":"TRX"
+    }
+}
+```
+
+**Response**
+```json
+{
+    "id": "3cf9f5b7-1013-4769-b396-9eb28e6b408d",
+    "rate": "TRX/BYN",
+    "systemRateValue": "0.9768",
+    "exchangeRateValue": "0.9768",
+    "actualRateValue": "1.0469",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:28:17+0000",
+    "expirationDate": "2026-04-30T11:28:47+0000",
+    "input": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "50",
+        "feeAmount": "3.35",
+        "provider": "ASSIST",
+        "token": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK"
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "47.757985",
+        "feeAmount": "0"
+    }
+}
+```
+
+### Step 3.2 Create buy order
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
+
+**Request**
+```json
+{
+    "quoteId":"47b2985a-2fe3-427c-9a18-6b16736c460e"
+}
+
+// exchange operation is processed immediately
+```
+
+**Response**
+```json
+{
+    "id": "d938165d-2158-4f4e-8bf1-9ef6c5806fdc",
+    "number": 721000004148,
+    "conditions": {
+        "fromAsset": "BYN",
+        "toAsset": "TRX",
+        "fromGrossAmount": "50",
+        "fromNetAmount": "46.65",
+        "fromFeeAmount": "3.35",
+        "toGrossAmount": "47.757985",
+        "toNetAmount": "47.757985",
+        "toFeeAmount": "0",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9768",
+        "exchangeRateValue": "0.9768",
+        "actualRateValue": "1.0469"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "PROCESSING",
+    "failureMessage": null,
+    "completionDate": null,
+    "creationDate": "2026-04-30T11:29:29+0000",
+    "sessionId": null,
+    "input": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "50",
+        "transactionAmount": "50",
+        "feeAmount": "3.35",
+        "status": "PROCESSING",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "toToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "link": "https://payments.t.paysecure.ru/pay/p2p/cc2mc.cfm?merchant_id=...&orderNumber=...&customerNumber=...&orderCurrency=BYN&orderAmount=50.0&checkValue=...&signature=...&tokenFrom=...&tokenTo=...",
+        "processorTransactionId": "c4e50d3e83bd4fccb8bf8b742470475f",
+        "post": null,
+        "paymentSystem": null
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "47.757985",
+        "transactionAmount": "47.757985",
+        "feeAmount": "0",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null
+    }
+}
+```
+
+---
+
+## 4) Sell (`sell`) — merchant V3 flow
+
+### Step 4.1 Create quote
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
+
+Required body fields:
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"INTERNAL_BALANCE",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"TRX",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":100                  // amount
+    },
+    "output":{
+        "type":"FIAT_PROVIDER",
+        "asset":"BYN",
+        "provider": "ASSIST",                                // provider
+        "token": "{{payment_token}}"      // payment token id
+    }
+}
+
+// amount can be provided in input or output
+// systemRateValue   - rate without fee
+// exchangeRateValue - rate with fee
+// actualRateValue   - currently not used in UI logic
+// feeAmount         - fee amount
+// expirationDate    - quote lifetime
+```
+
+**Response**
+```json
+{
+    "id": "a95bf590-c029-47b2-bf95-adbcf50a11bb",
+    "rate": "TRX/BYN",
+    "systemRateValue": "0.9765",
+    "exchangeRateValue": "0.9765",
+    "actualRateValue": "0.9208",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:38:25+0000",
+    "expirationDate": "2026-04-30T11:38:55+0000",
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "feeAmount": "0"
+    },
+    "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "92.08",
+        "feeAmount": "5.57",
+        "provider": "ASSIST",
+        "token": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK"
+    }
+}
+```
+
+### Step 4.2 Create sell order
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
+
+**Request**
+```json
+{
+    "quoteId":"a95bf590-c029-47b2-bf95-adbcf50a11bb"
+}
+
+// exchange operation is processed immediately
+```
+
+**Response**
+```json
+{
+    "id": "2bf54839-b540-452b-9014-3ba9d32a1e93",
+    "number": 161000004149,
+    "conditions": {
+        "fromAsset": "TRX",
+        "toAsset": "BYN",
+        "fromGrossAmount": "100",
+        "fromNetAmount": "100",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "97.65",
+        "toNetAmount": "92.08",
+        "toFeeAmount": "5.57",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9765",
+        "exchangeRateValue": "0.9765",
+        "actualRateValue": "0.9208"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "PROCESSING",
+    "failureMessage": null,
+    "completionDate": null,
+    "creationDate": "2026-04-30T11:40:23+0000",
+    "sessionId": null,
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "transactionAmount": "100",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    },
+    "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "97.65",
+        "transactionAmount": "92.08",
+        "feeAmount": "5.57",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "toToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "link": null,
+        "processorTransactionId": "f42bb8b78d814be48f0256a96c2208ac",
+        "post": null,
+        "paymentSystem": null
+    }
+}
+```
+
+---
+
+## 5) Operation history/details
+
+### Step 5.1 Get order history/details
+**POST** `{{URL}}/api/v3/exchange/merchant/order/history?page=0&size=20&sort=creationDate,desc`
+
+**Request**
+```json
+{
+    "clientIds": [
+        "{{clientId}}"
+    ]
+}
+// "operationTypes": [], // FIAT_PROVIDER / CRYPTO_TRANSFER / INTERNAL_BALANCE
+// "statuses": [],       // PROCESSING / EXPIRED / COMPLETED / FAILED
+// "assets": [],         // assets: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+// "completionDateFrame":{    // completion date range
+//     "start":"2024-08-25T00:00:00+0300",
+//     "end":"2026-09-02T00:00:00+0300"
+// },
+// "creationDateFrame":{      // creation date range
+//     "start":"2024-08-25T00:00:00+0300",
+//     "end":"2026-09-02T00:00:00+0300"
+// }
+```
+
+**Response**
+```json
+{
+  "content": [
+    {
+      "id": "2bf54839-b540-452b-9014-3ba9d32a1e93",
+      "number": 161000004149,
+      "conditions": {
+        "fromAsset": "TRX",
+        "toAsset": "BYN",
+        "fromGrossAmount": "100",
+        "fromNetAmount": "100",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "97.65",
+        "toNetAmount": "92.08",
+        "toFeeAmount": "5.57",
+        "promoCode": null,
+        "rate": "TRX/BYN",
+        "systemRateValue": "0.9765",
+        "exchangeRateValue": "0.9765",
+        "actualRateValue": "0.9208"
+      },
+      "recalculationReason": null,
+      "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+      "status": "PROCESSING",
+      "failureMessage": null,
+      "completionDate": null,
+      "creationDate": "2026-04-30T11:40:23+0000",
+      "sessionId": null,
+      "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "100",
+        "transactionAmount": "100",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+      },
+      "output": {
+        "type": "FIAT_PROVIDER",
+        "asset": "BYN",
+        "amount": "97.65",
+        "transactionAmount": "92.08",
+        "feeAmount": "5.57",
+        "status": "NEW",
+        "failureMessage": null,
+        "expirationDate": null,
+        "provider": "ASSIST",
+        "paymentType": "P2P",
+        "processingBank": "BELARUSBANK",
+        "clientBank": null,
+        "fromToken": "97fe9aa7-7805-438f-8c5e-aea24b4f9dc4",
+        "toToken": "fc4b130e-c3bf-4a3d-abe5-9ec5900c9868",
+        "link": null,
+        "processorTransactionId": "f42bb8b78d814be48f0256a96c2208ac",
+        "post": null,
+        "paymentSystem": null
+      }
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "number": 0,
+  "size": 20
+}
+```
+
+---
+
+## 6) Conversion (`conversion`) — merchant V3 flow
+
+For custodial wallet, conversion goes through internal balance (`USER_BALANCE` / `INTERNAL_BALANCE`) and standard V3 quote/order flow.
+
+
+### Step 6.1 Check limits
+**POST** `{{URL}}/api/v3/exchange/merchant/limit`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "fromAsset": "USDT_TRC",
+    "fromPaymentDetails": {
+        "type": "INTERNAL_BALANCE"
+    },
+    "toAsset": "TRX",
+    "toPaymentDetails": {
+        "type": "INTERNAL_BALANCE"
+    }
+}
+```
+
+**Response**
+```json
+{
+    "fromMinAmount": "0.00515231",
+    "fromMaxAmount": "6.43319589",
+    "toMinAmount": "947.37",
+    "toMaxAmount": "1182894.74"
+}
+```
+
+### Step 6.2 Create quote
+**POST** `{{URL}}/api/v3/exchange/merchant/quote`
+
+Required body fields:
+- `input.type`
+- `input.asset`
+- `output.type`
+- `output.asset`
+- at least one amount: `input.amount` or `output.amount`
+
+**Request**
+```json
+{
+    "clientId": "{{clientId}}",
+    "input":{
+        "type":"INTERNAL_BALANCE",  // operation type: INTERNAL_BALANCE / FIAT_PROVIDER / CRYPTO_TRANSFER
+        "asset":"USDT_TRC",              // asset: BYN RUB EUR USD BTC ETH USDT_ERC USDC_USDC TRX USDT_TRC TON USDT_TON
+        "amount":5                  // amount
+    },
+    "output":{
+        "type":"INTERNAL_BALANCE",
+        "asset":"TRX"
+    }
+}
+
+// amount can be provided in input or output
+// systemRateValue   - rate without fee
+// exchangeRateValue - rate with fee
+// actualRateValue   - currently not used in UI logic
+// feeAmount         - fee amount
+// expirationDate    - quote lifetime
+```
+
+**Response**
+```json
+{
+    "id": "601b24b6-c7c3-4205-8396-79903f76f25e",
+    "rate": "TRX/USDT_TRC",
+    "systemRateValue": "0.3255",
+    "exchangeRateValue": "0.3255",
+    "actualRateValue": "0.3305",
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "creationDate": "2026-04-30T11:05:37+0000",
+    "expirationDate": "2026-04-30T11:06:07+0000",
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "USDT_TRC",
+        "amount": "5",
+        "feeAmount": "0"
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "15.130568",
+        "feeAmount": "0.230415"
+    }
+}
+```
+
+### Step 6.3 Create swap operation
+**POST** `{{URL}}/api/v3/exchange/merchant/order`
+
+**Request**
+```json
+{
+    "quoteId":""
+}
+// exchange operation is processed immediately
+```
+
+**Response**
+```json
+{
+    "id": "08d5b13c-5a5b-470b-b244-6a6becb7888b",
+    "number": 821000004152,
+    "conditions": {
+        "fromAsset": "USDT_TRC",
+        "toAsset": "TRX",
+        "fromGrossAmount": "5",
+        "fromNetAmount": "5",
+        "fromFeeAmount": "0",
+        "toGrossAmount": "15.346839",
+        "toNetAmount": "15.116636",
+        "toFeeAmount": "0.230203",
+        "promoCode": null,
+        "rate": "TRX/USDT_TRC",
+        "systemRateValue": "0.3258",
+        "exchangeRateValue": "0.3258",
+        "actualRateValue": "0.3308"
+    },
+    "recalculationReason": null,
+    "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562",
+    "status": "COMPLETED",
+    "failureMessage": null,
+    "completionDate": "2026-04-30T13:10:38+0000",
+    "creationDate": "2026-04-30T13:10:35+0000",
+    "sessionId": null,
+    "input": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "USDT_TRC",
+        "amount": "5",
+        "transactionAmount": "5",
+        "feeAmount": "0",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    },
+    "output": {
+        "type": "INTERNAL_BALANCE",
+        "asset": "TRX",
+        "amount": "15.116636",
+        "transactionAmount": "15.116636",
+        "feeAmount": "0.230203",
+        "status": "COMPLETED",
+        "failureMessage": null,
+        "expirationDate": null
+    }
+}
+```
+
