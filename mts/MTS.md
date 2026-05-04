@@ -352,7 +352,7 @@ x-api-key
 }
 ```
 
-### Fourth step
+### Fifth step
 
 Take `fiatTransaction.orderIdentity` from the order response.  
 This value is the payment reference number that the user enters in the bank app to confirm the transfer.
@@ -434,7 +434,7 @@ x-api-key
 }
 ```
 
-### Fifth step
+### Sixth step
 
 #### **Payment confirmation step (MTS Bank)**
 
@@ -454,61 +454,62 @@ x-api-key
 
 ```jsx
 {
-    "id": "1492954d-a1c5-40f9-9dde-abac06278504",
+    "id": "966bc041-80a5-413a-abc7-0a45c13f9489",
     "type": "BUY",
     "status": "COMPLETED",
-    "creationDate": "2026-03-31T07:02:47.976606",
-    "modificationDate": "2026-03-31T07:04:56.869242",
-    "number": 831000003399,
+    "creationDate": "2026-05-04T09:25:15.257418",
+    "modificationDate": "2026-05-04T09:28:06.042662",
+    "number": 151000004194,
     "exchangeOperation": {
         "inputCurrency": "RUB",
         "inputAsset": 922,
         "outputCurrency": "TRX",
-        "outputAsset": 33.326158,
+        "outputAsset": 31.495284,
         "exchangeFeeAssetInFiat": 23.05,
         "bonusOutputAsset": null,
-        "plainRatio": 26.7631,
-        "ratio": 27.666,
+        "plainRatio": 28.306,
+        "ratio": 29.2742,
         "currencyPair": {
             "fromCurrency": "RUB",
             "toCurrency": "TRX"
         }
     },
     "cryptoTransaction": {
-        "hash": "6dca5fb9350096325e030c0e2ab582be0644a5c571a160d356f5c15645ccf73b",
+        "hash": "061b0a94d09330feeaa83fd88a2477227710cbbd9329f93d710719febba103cb",
         "externalCryptoAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
-        "internalCryptoAddress": "TPLBm3TBPd6PgGEBKPACKSsL4UEQTPnCtU",
-        "fromAddress": "TPLBm3TBPd6PgGEBKPACKSsL4UEQTPnCtU",
+        "internalCryptoAddress": "TSaysSYUgBoKbtBgnXdxvNQPjkeXC1s9eM",
+        "fromAddress": "TSaysSYUgBoKbtBgnXdxvNQPjkeXC1s9eM",
         "toAddress": "TCT2pKJXo233hrKWQMeCptC8My1KGvtsU4",
         "status": "CONFIRMED",
         "currency": "TRX",
-        "fee": "0.268",
+        "fee": "0",
         "feePaymentEnabledByClient": false,
         "type": "AUTO",
         "comment": null
     },
     "fiatTransaction": {
         "status": "APPROVED",
-        "paymentToken": "fa380b87-d2cd-471b-8d92-e13a2494f70d",
+        "paymentToken": null,
         "post": null,
         "brand": null,
         "internalToken": null,
-        "orderIdentity": "7307742",
+        "orderIdentity": "7085091",
         "link": null,
         "providerType": "MTS",
         "paymentType": null,
         "processingBank": null,
         "resultMessage": null,
-        "currency": "RUB"
+        "currency": "RUB",
+        "processorTransactionNumber": null
     },
     "client": {
-        "clientId": "d028460b-95cd-4562-ac5e-767bf87df40b"
+        "clientId": "3e1469fa-8d35-441c-87b1-a007aeba2562"
     },
-    "serverDate": "2026-03-31T07:06:18+0000",
+    "serverDate": "2026-05-04T09:34:27+0000",
     "exchangeType": "SELL",
     "operationType": "FIAT_TO_CRYPTO",
     "orderType": "DEFAULT",
-    "completionDate": "2026-03-31T07:04:56+0000",
+    "completionDate": "2026-05-04T09:28:04+0000",
     "resultMessage": null,
     "submitByResident": null,
     "merchantName": "wb",
