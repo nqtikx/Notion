@@ -354,7 +354,8 @@ x-api-key
 
 ### Fourth step
 
-Take "orderIdentity": "xxxx", // the number for confirming the transaction in the bank's application
+Take `fiatTransaction.orderIdentity` from the order response.  
+This value is the payment reference number that the user enters in the bank app to confirm the transfer.
 
 #### GET https://api.dev.wbdevel.net/api/v2/exchange/merchant/order?orderId={{orderId}}
 
