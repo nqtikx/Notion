@@ -170,6 +170,8 @@ If the client has successfully bound their card, you can get the card id in Whit
 
 ### First step
 
+Verify that the payment provider is available
+
 #### POST api/v2/exchange/merchant/payment/provider
 
 #### Request Header:
