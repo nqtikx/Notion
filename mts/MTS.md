@@ -408,7 +408,7 @@ x-api-key
         "post": null,
         "brand": null,
         "internalToken": null,
-        "orderIdentity": "7085091", // the number for confirming the transaction in the bank's application
+        "orderIdentity": "5605652", // the number for confirming the transaction in the bank's application
         "link": null,
         "providerType": "MTS",
         "paymentType": null,
@@ -495,7 +495,7 @@ x-api-key
         "post": null,
         "brand": null,
         "internalToken": null,
-        "orderIdentity": "7085091",
+        "orderIdentity": "5605652",
         "link": null,
         "providerType": "MTS",
         "paymentType": null,
